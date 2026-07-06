@@ -421,8 +421,10 @@ def voiceover_node(state: ContentState, tts: HyperFramesTTS, output_dir: str,
 - `composition_writer_node(state: ContentState, project_dir: str, width: int = 1080, height: int = 1920, disclosure_duration_sec: float = 3.0) -> ContentState`
 - Writes `<project_dir>/index.html`: one root `<div data-composition-id data-width data-height data-duration>`.
 - If `state["disclosure_audio_path"]` is set (from `voiceover_node`), **prepends** a `disclosure_duration_sec`-long intro `.clip` (simple centered text, e.g. the disclosure text itself) + its `<audio>`, and shifts every scene's `data-start` by that duration — this is the one-time **audible** AI disclosure required by India's 2026 IT Rules.
-- One **persistent** `.ai-label` element (not a `.clip` — a small fixed-position badge, not full-screen) spanning `data-start="0"` to `data-duration="<total>"` at `data-track-index="0"`, always visible — the **continuous visible** labeling the same rules require.
+- One **persistent** `.ai-label` element spanning `data-start="0"` to `data-duration="<total>"` at `data-track-index="0"`, always visible — the **continuous visible** labeling the same rules require. It still needs `class="clip"` (any timed element does, see verification note below), with its corner-badge positioning layered on top via a second class.
 - One `.clip` `<section>` per segment (`data-start`, `data-duration`, `data-track-index="1"`, contains the scene image + a burned-in caption `<p>`); one `<audio>` **direct child of root** per segment with audio (`data-start`, `data-duration`, `data-track-index="10"`, relative `src`). Sets `state["composition_path"]`.
+
+> **Verified 2026-07-06 against the real HyperFrames CLI** (Node 26, ran `hyperframes lint`/`validate`/`inspect`/`render` live against generated output, not just read the contract docs). Two real bugs the docs alone didn't surface: (1) the **root element also needs `data-start="0"`**, not just `data-duration` — lint fails with `root_composition_missing_data_start` without it; (2) **any element with timing attributes needs `class="clip"`**, including the persistent `.ai-label` — without it, lint errors `studio_missing_editable_id`-adjacent (`element has timing attributes but no class="clip"`) and the element won't respect its visibility window at all. Since `.clip` sets `inset: 0` (full-screen) and the label needs to stay a small corner badge, its CSS explicitly resets `inset: auto` then sets only `top`/`right` (leaving `bottom`/`left: auto`) so the two classes don't fight. Also added `id` attributes to every clip/audio element — not required for render, but `lint` warns without them (`studio_missing_editable_id`) and it's free to fix. A full local render of a generated composition produced a real playable MP4 in ~4s — the approach works end-to-end, not just in theory.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -459,9 +461,9 @@ def test_composition_writer_produces_valid_contract_html(tmp_path):
     assert 'data-duration="15.0"' in html          # 3 (disclosure) + 5 + 7
     assert html.count('class="clip"') == 3         # disclosure intro + 2 segments
     assert html.count("<audio") == 3                # disclosure + 2 segments
-    assert 'class="ai-label"' in html               # persistent visible label
+    assert 'id="ai-label"' in html                  # persistent visible label
     # the persistent label spans the whole video, not just one scene
-    assert 'class="ai-label" data-start="0" data-duration="15.0"' in html
+    assert 'id="ai-label" class="clip ai-label" data-start="0" data-duration="15.0"' in html
     # scene 1 must start AFTER the disclosure intro, not at 0
     assert 'data-start="3.0" data-duration="5.0"' in html
     # audio must not be nested inside a clip section
@@ -502,13 +504,13 @@ _HEAD = """<!doctype html>
       .caption {{ position: absolute; left: 5%; right: 5%; bottom: 8%; font-size: 48px;
                   text-align: center; text-shadow: 0 2px 8px rgba(0,0,0,.8); }}
       .disclosure-text {{ font-size: 40px; text-align: center; padding: 0 8%; }}
-      .ai-label {{ position: absolute; top: 3%; right: 4%; font-size: 22px; color: #fff;
-                   background: rgba(0,0,0,.55); padding: 6px 14px; border-radius: 8px; }}
+      .ai-label {{ inset: auto; top: 3%; right: 4%; bottom: auto; left: auto; font-size: 22px;
+                   color: #fff; background: rgba(0,0,0,.55); padding: 6px 14px; border-radius: 8px; }}
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="{comp_id}" data-width="{width}" data-height="{height}" data-duration="{duration}">
-      <div class="ai-label" data-start="0" data-duration="{duration}" data-track-index="0">AI-Generated</div>
+    <div id="root" data-composition-id="{comp_id}" data-start="0" data-width="{width}" data-height="{height}" data-duration="{duration}">
+      <div id="ai-label" class="clip ai-label" data-start="0" data-duration="{duration}" data-track-index="0">AI-Generated</div>
 """
 
 _TAIL = """    </div>
@@ -535,14 +537,14 @@ def composition_writer_node(state: ContentState, project_dir: str,
         if disclosure_audio:
             rel = os.path.relpath(disclosure_audio, project_dir)
             clips.append(
-                f'      <section class="clip" data-start="{cursor}" '
+                f'      <section id="disclosure-intro" class="clip" data-start="{cursor}" '
                 f'data-duration="{disclosure_duration_sec}" data-track-index="1">\n'
                 f'        <p class="disclosure-text">This video uses AI-generated voice and visuals.</p>\n'
                 f'      </section>'
             )
             media_tags.append(
-                f'      <audio data-start="{cursor}" data-duration="{disclosure_duration_sec}" '
-                f'data-track-index="10" src="{rel}"></audio>'
+                f'      <audio id="disclosure-audio" data-start="{cursor}" '
+                f'data-duration="{disclosure_duration_sec}" data-track-index="10" src="{rel}"></audio>'
             )
             cursor += disclosure_duration_sec
 
@@ -550,8 +552,9 @@ def composition_writer_node(state: ContentState, project_dir: str,
             dur = float(seg["duration_sec"])
             image = visuals.get(seg["scene_number"], {}).get("image_url", "")
             text = seg.get("voiceover_text", "")
+            scene_id = f"scene-{seg['scene_number']}"
             clips.append(
-                f'      <section class="clip" data-start="{cursor}" data-duration="{dur}" '
+                f'      <section id="{scene_id}" class="clip" data-start="{cursor}" data-duration="{dur}" '
                 f'data-track-index="1">\n'
                 f'        <img src="{image}" crossorigin="anonymous" />\n'
                 f'        <p class="caption">{text}</p>\n'
@@ -561,7 +564,7 @@ def composition_writer_node(state: ContentState, project_dir: str,
             if audio_path:
                 rel = os.path.relpath(audio_path, project_dir)
                 media_tags.append(
-                    f'      <audio data-start="{cursor}" data-duration="{dur}" '
+                    f'      <audio id="{scene_id}-audio" data-start="{cursor}" data-duration="{dur}" '
                     f'data-track-index="10" src="{rel}"></audio>'
                 )
             cursor += dur
@@ -597,21 +600,16 @@ def composition_writer_node(state: ContentState, project_dir: str,
 
 **Interfaces:**
 - `HyperFramesCLI(runner=subprocess.run)`
-- `.ensure_project(project_dir)`, `.lint(project_dir)`, `.validate(project_dir)`, `.inspect(project_dir)`, `.render(project_dir, output_path, quality="high")` — each raises `RuntimeError` on non-zero exit.
+- `.lint(project_dir)`, `.validate(project_dir)`, `.inspect(project_dir)`, `.render(project_dir, output_path, quality="high")` — each raises `RuntimeError` on non-zero exit.
 
-- [ ] **Step 1: Verify real CLI flags before writing the wrapper (do this live, once Node/FFmpeg are installed)**
+> **Verified 2026-07-06 live against the real CLI** (Node v26.3.0, npx 11.16.0, ffmpeg 8.1.2 all present) — ran every `--help` and a real end-to-end render, not just guessed. Findings that changed this task from the original best-guess:
+> 1. **No `--cwd` flag exists at all.** `lint`/`validate`/`inspect`/`render` all take the project directory as a **positional argument**: `hyperframes lint [OPTIONS] [DIR]`. Confirmed via `--help` and by actually running `hyperframes lint /tmp/hf_test_project --json` successfully.
+> 2. **No `init`/`ensure_project` step is needed at all.** `init` scaffolds a *new* example project (`hyperframes init [OPTIONS] [NAME]`) — running it against a directory that already holds our own hand-authored `index.html` would conflict with it, not "ensure" anything. `lint`/`validate`/`inspect`/`render` all work directly against any directory containing a valid `index.html`; empirically confirmed by running the full lint → validate → inspect → render chain against a bare directory with no `init` step, ending in a real playable `out.mp4`.
+> 3. `render`'s quality flag accepts `draft | standard | high` (default `standard`, not `high`) via `-q/--quality`; output path via `-o/--output`.
+>
+> The `render_node` in Task 8 no longer calls `ensure_project` — it's deleted from this task's interface entirely.
 
-Run and read the `--help` output for each — do not guess flag names:
-```
-npx hyperframes init --help
-npx hyperframes lint --help
-npx hyperframes validate --help
-npx hyperframes inspect --help
-npx hyperframes render --help
-```
-Confirm: (a) the flag that targets a project directory other than the process cwd (this plan assumes `--cwd <dir>` below — **fix the wrapper if the real flag differs**), (b) `init`'s non-interactive flags (this plan assumes `--non-interactive --example`, per the `hyperframes-cli` skill doc).
-
-- [ ] **Step 2: Write the failing test**
+- [ ] **Step 1: Write the failing test**
 
 ```python
 import pytest
@@ -629,6 +627,15 @@ def test_lint_raises_on_failure():
     with pytest.raises(RuntimeError):
         cli.lint("some/project")
 
+def test_lint_builds_expected_command():
+    captured = {}
+    def fake_run(cmd, capture_output, text):
+        captured["cmd"] = cmd
+        return FakeResult(0)
+    cli = HyperFramesCLI(runner=fake_run)
+    cli.lint("proj")
+    assert captured["cmd"] == ["npx", "hyperframes", "lint", "proj", "--json"]
+
 def test_render_builds_expected_command():
     captured = {}
     def fake_run(cmd, capture_output, text):
@@ -636,14 +643,13 @@ def test_render_builds_expected_command():
         return FakeResult(0)
     cli = HyperFramesCLI(runner=fake_run)
     cli.render("proj", "proj/render/final.mp4", quality="high")
-    assert captured["cmd"][:2] == ["npx", "hyperframes"]
-    assert "render" in captured["cmd"]
-    assert "proj/render/final.mp4" in captured["cmd"]
+    assert captured["cmd"] == ["npx", "hyperframes", "render", "proj",
+                              "--quality", "high", "--output", "proj/render/final.mp4"]
 ```
 
-- [ ] **Step 3: Run test to verify it fails** — `ModuleNotFoundError`.
+- [ ] **Step 2: Run test to verify it fails** — `ModuleNotFoundError`.
 
-- [ ] **Step 4: Write `integrations/hyperframes_cli.py`** (adjust flags per Step 1's findings)
+- [ ] **Step 3: Write `integrations/hyperframes_cli.py`**
 
 ```python
 import subprocess
@@ -658,25 +664,22 @@ class HyperFramesCLI:
         if result.returncode != 0:
             raise RuntimeError(f"hyperframes {' '.join(args)} failed: {result.stderr}")
 
-    def ensure_project(self, project_dir: str) -> None:
-        self._exec(["init", project_dir, "--non-interactive", "--example"])
-
     def lint(self, project_dir: str) -> None:
-        self._exec(["lint", "--cwd", project_dir, "--json"])
+        self._exec(["lint", project_dir, "--json"])
 
     def validate(self, project_dir: str) -> None:
-        self._exec(["validate", "--cwd", project_dir, "--json"])
+        self._exec(["validate", project_dir, "--json"])
 
     def inspect(self, project_dir: str) -> None:
-        self._exec(["inspect", "--cwd", project_dir, "--json"])
+        self._exec(["inspect", project_dir, "--json"])
 
     def render(self, project_dir: str, output_path: str, quality: str = "high") -> None:
-        self._exec(["render", "--cwd", project_dir, "--quality", quality, "--output", output_path])
+        self._exec(["render", project_dir, "--quality", quality, "--output", output_path])
 ```
 
-- [ ] **Step 5: Run test to verify it passes** — PASS.
+- [ ] **Step 4: Run test to verify it passes** — 3 PASS.
 
-- [ ] **Step 6: Commit** — `git commit -m "feat: HyperFrames CLI wrapper (lint/validate/inspect/render)"`
+- [ ] **Step 5: Commit** — `git commit -m "feat: HyperFrames CLI wrapper (verified real flags, no init step needed)"`
 
 ---
 
@@ -686,7 +689,7 @@ class HyperFramesCLI:
 
 **Interfaces:**
 - `render_node(state: ContentState, cli: HyperFramesCLI, notifier: Notifier, project_dir: str) -> ContentState`
-- Runs `ensure_project` → `lint` → `validate` → `inspect` (any exception → `errors` + `status="failed"`, no render attempted). If `"render"` is in `hitl_checkpoints` and mode != `full_auto`, asks approval; reject → `status="failed"`. On approve (or when the checkpoint is skipped), calls `cli.render(...)`, verifies the output file exists via an injectable `exists_fn`/`getsize_fn` (default `os.path.exists`/`os.path.getsize`, mocked in tests), sets `state["render_output_path"]` and `state["status"]="media_complete"`.
+- Runs `lint` → `validate` → `inspect` (any exception → `errors` + `status="failed"`, no render attempted). If `"render"` is in `hitl_checkpoints` and mode != `full_auto`, asks approval; reject → `status="failed"`. On approve (or when the checkpoint is skipped), calls `cli.render(...)`, verifies the output file exists via an injectable `exists_fn`/`getsize_fn` (default `os.path.exists`/`os.path.getsize`, mocked in tests), sets `state["render_output_path"]` and `state["status"]="media_complete"`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -698,7 +701,6 @@ class FakeCLI:
     def __init__(self, fail_at=None):
         self.fail_at = fail_at
         self.calls = []
-    def ensure_project(self, d): self.calls.append(("ensure_project", d))
     def lint(self, d):
         self.calls.append(("lint", d))
         if self.fail_at == "lint": raise RuntimeError("lint failed")
@@ -745,7 +747,6 @@ from orchestrator.state import ContentState
 
 def render_node(state: ContentState, cli, notifier, project_dir: str) -> ContentState:
     try:
-        cli.ensure_project(project_dir)
         cli.lint(project_dir)
         cli.validate(project_dir)
         cli.inspect(project_dir)
@@ -809,7 +810,6 @@ def test_full_run_produces_rendered_video(monkeypatch, tmp_path):
         def synthesize(self, text, output_path): return output_path
 
     class FakeCLI:
-        def ensure_project(self, d): pass
         def lint(self, d): pass
         def validate(self, d): pass
         def inspect(self, d): pass
@@ -924,6 +924,6 @@ Expected: real topic → real script → real fal.ai images → real Kokoro audi
 
 - **Spec coverage:** two-tier fal.ai visuals (✓, FLUX.2 [dev] + FLUX.1 schnell after the 2026-07-06 research pass), Kokoro voice via the already-installed HyperFrames CLI rather than a duplicate integration (✓, a deliberate deviation from the spec's literal "BUILD" wording — the capability already exists, adopting it is strictly less code for the same result), HyperFrames HTML→video render (✓), AI-content disclosure (✓, new — legally required, not spec'd originally, added after the research pass). Upload, analytics, scheduling are correctly out of scope (Phases 3–4).
 - **Deferred intentionally, not forgotten:** BGM/SFX, per-word animated captions, WhatsApp notifier (still CLI/AutoApprove only), real character reference image (falls back gracefully, see point 5 above), Sarvam AI as a Hinglish-quality voice upgrade, LangGraph `SqliteSaver`+`interrupt()` for durable pause/resume, VideoGraphAI-style fact-grounding before `script_writer` — all tracked in the spec's §6 research log, none silently dropped.
-- **Two unverified assumptions flagged, not silently shipped:** (1) exact HyperFrames CLI flags for targeting a non-cwd project directory (`--cwd`) and `init`'s non-interactive flags — Task 7 Step 1 requires confirming these against real `--help` output. (2) the exact fal.ai FLUX.2 model slug and reference-image argument name (`fal-ai/flux-2` / `image_urls` are best-guess from research) — Task 2 Step 1 requires confirming these against fal.ai's live model docs. Don't skip either verification step even though the plan includes best-guess code for both.
+- **Both flagged unverified assumptions were checked live before shipping, and both guesses were wrong:** (1) HyperFrames CLI — there's no `--cwd` flag (directory is positional) and no `init` step is needed at all (confirmed via a real `lint` → `validate` → `inspect` → `render` run producing a playable MP4). (2) fal.ai FLUX.2 — the real model slug is `fal-ai/flux-2/edit`, not the guessed `fal-ai/flux-2` (the `image_urls` list parameter guess was correct). Additionally, running a real generated composition through the live CLI surfaced two contract bugs neither the docs nor the unit tests alone caught: the root element needs `data-start="0"` (not just `data-duration`), and any timed element — including the persistent `.ai-label` — needs `class="clip"` or the runtime won't respect its visibility window. Both are fixed in Task 6's code above. This is the value of verifying against the real tool instead of trusting documentation summaries.
 - **Compliance note:** the disclosure duration is a fixed 3-second estimate, not measured from the actual synthesized audio (the TTS wrapper doesn't return duration). Good enough for Phase 2; revisit with real `ffprobe`-based duration if the spoken line and the intro clip's length ever visibly mismatch.
 - **Type consistency:** every new node follows the Phase 1 error contract (`errors` list, no raised exceptions across node boundaries) and every new external call goes through an injectable wrapper so the full suite stays network/subprocess-free except the one explicit live smoke test at the end.

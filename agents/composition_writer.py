@@ -16,13 +16,13 @@ _HEAD = """<!doctype html>
       .caption {{ position: absolute; left: 5%; right: 5%; bottom: 8%; font-size: 48px;
                   text-align: center; text-shadow: 0 2px 8px rgba(0,0,0,.8); }}
       .disclosure-text {{ font-size: 40px; text-align: center; padding: 0 8%; }}
-      .ai-label {{ position: absolute; top: 3%; right: 4%; font-size: 22px; color: #fff;
-                   background: rgba(0,0,0,.55); padding: 6px 14px; border-radius: 8px; }}
+      .ai-label {{ inset: auto; top: 3%; right: 4%; bottom: auto; left: auto; font-size: 22px;
+                   color: #fff; background: rgba(0,0,0,.55); padding: 6px 14px; border-radius: 8px; }}
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="{comp_id}" data-width="{width}" data-height="{height}" data-duration="{duration}">
-      <div class="ai-label" data-start="0" data-duration="{duration}" data-track-index="0">AI-Generated</div>
+    <div id="root" data-composition-id="{comp_id}" data-start="0" data-width="{width}" data-height="{height}" data-duration="{duration}">
+      <div id="ai-label" class="clip ai-label" data-start="0" data-duration="{duration}" data-track-index="0">AI-Generated</div>
 """
 
 _TAIL = """    </div>
@@ -49,14 +49,14 @@ def composition_writer_node(state: ContentState, project_dir: str,
         if disclosure_audio:
             rel = os.path.relpath(disclosure_audio, project_dir)
             clips.append(
-                f'      <section class="clip" data-start="{cursor}" '
+                f'      <section id="disclosure-intro" class="clip" data-start="{cursor}" '
                 f'data-duration="{disclosure_duration_sec}" data-track-index="1">\n'
                 f'        <p class="disclosure-text">This video uses AI-generated voice and visuals.</p>\n'
                 f'      </section>'
             )
             media_tags.append(
-                f'      <audio data-start="{cursor}" data-duration="{disclosure_duration_sec}" '
-                f'data-track-index="10" src="{rel}"></audio>'
+                f'      <audio id="disclosure-audio" data-start="{cursor}" '
+                f'data-duration="{disclosure_duration_sec}" data-track-index="10" src="{rel}"></audio>'
             )
             cursor += disclosure_duration_sec
 
@@ -64,8 +64,9 @@ def composition_writer_node(state: ContentState, project_dir: str,
             dur = float(seg["duration_sec"])
             image = visuals.get(seg["scene_number"], {}).get("image_url", "")
             text = seg.get("voiceover_text", "")
+            scene_id = f"scene-{seg['scene_number']}"
             clips.append(
-                f'      <section class="clip" data-start="{cursor}" data-duration="{dur}" '
+                f'      <section id="{scene_id}" class="clip" data-start="{cursor}" data-duration="{dur}" '
                 f'data-track-index="1">\n'
                 f'        <img src="{image}" crossorigin="anonymous" />\n'
                 f'        <p class="caption">{text}</p>\n'
@@ -75,7 +76,7 @@ def composition_writer_node(state: ContentState, project_dir: str,
             if audio_path:
                 rel = os.path.relpath(audio_path, project_dir)
                 media_tags.append(
-                    f'      <audio data-start="{cursor}" data-duration="{dur}" '
+                    f'      <audio id="{scene_id}-audio" data-start="{cursor}" data-duration="{dur}" '
                     f'data-track-index="10" src="{rel}"></audio>'
                 )
             cursor += dur

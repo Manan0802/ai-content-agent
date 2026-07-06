@@ -32,9 +32,9 @@ def test_composition_writer_produces_valid_contract_html(tmp_path):
     assert 'data-duration="15.0"' in html          # 3 (disclosure) + 5 + 7
     assert html.count('class="clip"') == 3         # disclosure intro + 2 segments
     assert html.count("<audio") == 3                # disclosure + 2 segments
-    assert 'class="ai-label"' in html               # persistent visible label
+    assert 'id="ai-label"' in html                  # persistent visible label
     # the persistent label spans the whole video, not just one scene
-    assert 'class="ai-label" data-start="0" data-duration="15.0"' in html
+    assert 'id="ai-label" class="clip ai-label" data-start="0" data-duration="15.0"' in html
     # scene 1 must start AFTER the disclosure intro, not at 0
     assert 'data-start="3.0" data-duration="5.0"' in html
     # audio must not be nested inside a clip section
