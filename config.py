@@ -17,6 +17,14 @@ class Settings:
     default_niche: str = "horror"
     default_language: str = "hinglish"
     default_mode: str = "semi_auto"
+    fal_api_key: str | None = os.getenv("FAL_KEY")
+    character_ref_image_url: str = os.getenv("CHARACTER_REF_IMAGE_URL", "")
+    kokoro_voice: str = "af_heart"
+    video_width: int = 1080
+    video_height: int = 1920
+    outputs_dir: str = "outputs"
+    ai_disclosure_text: str = "This video was made using AI-generated voice and visuals."
+    ai_disclosure_duration_sec: float = 3.0
 
 
 SETTINGS = Settings()
