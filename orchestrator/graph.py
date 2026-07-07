@@ -3,6 +3,11 @@ from langgraph.graph import StateGraph, END
 from orchestrator.state import ContentState
 from agents.idea_generator import idea_generator_node
 from agents.script_writer import script_writer_node
+from agents.visuals import visuals_node
+from agents.voiceover import voiceover_node
+from agents.composition_writer import composition_writer_node
+from agents.render import render_node
+from config import SETTINGS
 
 
 def _idea(state, groq, trends):
@@ -40,22 +45,53 @@ def _hitl_script(state, notifier):
         decision = notifier.ask_approval("Review script", str(state["script"])[:1500])
         if decision != "approve":
             state["status"] = "failed"
-            return state
-    state["status"] = "complete"
     return state
 
 
-def build_graph(groq, trends, notifier, checkpoint_path=":memory:"):
+def _route_after_script_hitl(state):
+    return "visuals" if state["status"] != "failed" else END
+
+
+def _visuals(state, fal):
+    return visuals_node(state, fal=fal, character_ref_url=SETTINGS.character_ref_image_url)
+
+
+def _voiceover(state, tts, project_dir):
+    return voiceover_node(state, tts=tts, output_dir=f"{project_dir}/assets/audio",
+                          disclosure_text=SETTINGS.ai_disclosure_text)
+
+
+def _composition(state, project_dir):
+    return composition_writer_node(state, project_dir=project_dir,
+                                    width=SETTINGS.video_width, height=SETTINGS.video_height,
+                                    disclosure_duration_sec=SETTINGS.ai_disclosure_duration_sec)
+
+
+def _render(state, hf_cli, notifier, project_dir):
+    return render_node(state, cli=hf_cli, notifier=notifier, project_dir=project_dir)
+
+
+def build_graph(groq, trends, notifier, fal=None, tts=None, hf_cli=None,
+                project_dir="outputs/job", checkpoint_path=":memory:"):
     g = StateGraph(ContentState)
     g.add_node("idea_generator", partial(_idea, groq=groq, trends=trends))
     g.add_node("hitl_topic", partial(_hitl_topic, notifier=notifier))
     g.add_node("script_writer", partial(_script, groq=groq))
     g.add_node("hitl_script", partial(_hitl_script, notifier=notifier))
+    g.add_node("visuals", partial(_visuals, fal=fal))
+    g.add_node("voiceover", partial(_voiceover, tts=tts, project_dir=project_dir))
+    g.add_node("composition_writer", partial(_composition, project_dir=project_dir))
+    g.add_node("render", partial(_render, hf_cli=hf_cli, notifier=notifier, project_dir=project_dir))
 
     g.set_entry_point("idea_generator")
     g.add_edge("idea_generator", "hitl_topic")
     g.add_conditional_edges("hitl_topic", _route_after_topic,
                             {"script_writer": "script_writer", END: END})
     g.add_edge("script_writer", "hitl_script")
-    g.add_edge("hitl_script", END)
+    g.add_conditional_edges("hitl_script", _route_after_script_hitl,
+                            {"visuals": "visuals", END: END})
+    g.add_edge("visuals", "voiceover")
+    g.add_edge("voiceover", "composition_writer")
+    g.add_edge("composition_writer", "render")
+    g.add_edge("render", END)
     return g.compile()

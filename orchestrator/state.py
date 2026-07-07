@@ -17,6 +17,11 @@ class ContentState(TypedDict, total=False):
     hitl_checkpoints: list[str]
     human_approved: dict
     errors: list[str]
+    visual_assets: list[dict]
+    audio_assets: list[dict]
+    disclosure_audio_path: str
+    composition_path: str
+    render_output_path: str
 
 
 def new_state(niche: str, mode: str, language: str, format: str,
@@ -35,4 +40,9 @@ def new_state(niche: str, mode: str, language: str, format: str,
         hitl_checkpoints=hitl_checkpoints,
         human_approved={},
         errors=[],
+        visual_assets=[],
+        audio_assets=[],
+        disclosure_audio_path="",
+        composition_path="",
+        render_output_path="",
     )
