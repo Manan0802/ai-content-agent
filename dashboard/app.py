@@ -4,6 +4,8 @@ from fastapi.responses import FileResponse, HTMLResponse
 from config import SETTINGS
 from modules.job_store import list_jobs, get_job
 
+_INDEX_HTML = os.path.join(os.path.dirname(__file__), "index.html")
+
 
 def create_app(outputs_dir: str | None = None) -> FastAPI:
     outputs_dir = outputs_dir or SETTINGS.outputs_dir
@@ -29,6 +31,7 @@ def create_app(outputs_dir: str | None = None) -> FastAPI:
 
     @app.get("/", response_class=HTMLResponse)
     def index():
-        return "<!doctype html><title>AI Content Agent — Dashboard</title><h1>Dashboard</h1>"
+        with open(_INDEX_HTML, encoding="utf-8") as f:
+            return f.read()
 
     return app

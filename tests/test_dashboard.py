@@ -49,3 +49,11 @@ def test_video_served_when_present(tmp_path):
     resp = client.get(f"/video/{s['job_id']}")
     assert resp.status_code == 200
     assert resp.headers["content-type"].startswith("video/")
+
+
+def test_index_page_renders(tmp_path):
+    client = TestClient(create_app(str(tmp_path)))
+    resp = client.get("/")
+    assert resp.status_code == 200
+    assert "AI Content Agent" in resp.text
+    assert "/api/jobs" in resp.text  # the page fetches the jobs API

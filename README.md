@@ -40,6 +40,16 @@ python -m orchestrator.runner
 
 Generates topic ideas for the default niche, writes a script, generates voice + visuals, renders a video, and asks you to approve at each gate (topic, script, render) in the console. Produces `outputs/<job_id>/render/final.mp4`.
 
+## Dashboard
+
+A local web dashboard to see every job the agent has run — status, niche, topic, full script, and a playable preview of the rendered video.
+
+```bash
+uvicorn dashboard.app:create_app --factory --port 8000
+```
+
+Then open `http://localhost:8000`. It reads jobs from `outputs/` and auto-refreshes, so a finished run appears on its own. It's read-only monitoring for now — browser-based approve/reject arrives with the async human-in-the-loop refactor (Phase 5). Until you've run a job (needs a `GROQ_API_KEY`), it shows an empty state with the run command.
+
 ## Test
 
 ```bash

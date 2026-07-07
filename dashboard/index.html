@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Content Agent — Dashboard</title>
+  <style>
+    :root {
+      --bg: #0b0e14;
+      --bg-card: #141922;
+      --bg-card-hover: #1a2029;
+      --border: #232b38;
+      --text: #e6eaf0;
+      --text-dim: #8b94a3;
+      --text-faint: #5a6373;
+      --accent: #6ea8fe;
+      --green: #3fb950;
+      --blue: #4c9aff;
+      --red: #f85149;
+      --amber: #d29922;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      position: sticky; top: 0; z-index: 10;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 32px;
+      background: rgba(11, 14, 20, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand .dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 0 4px rgba(63,185,80,.15);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+    .brand h1 { font-size: 17px; font-weight: 650; margin: 0; letter-spacing: -0.01em; }
+    .brand span { color: var(--text-faint); font-size: 13px; font-weight: 400; }
+    .meta { display: flex; align-items: center; gap: 18px; color: var(--text-dim); font-size: 13px; }
+    .meta .count { color: var(--text); font-weight: 600; }
+    .refresh { display: flex; align-items: center; gap: 6px; }
+    .refresh .spin { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: pulse 1.5s infinite; }
+
+    main { max-width: 1180px; margin: 0 auto; padding: 32px; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      cursor: pointer;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+    }
+    .card:hover { transform: translateY(-2px); border-color: #33404f; background: var(--bg-card-hover); }
+    .card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; }
+    .badge .bdot { width: 7px; height: 7px; border-radius: 50%; }
+    .badge.complete, .badge.media_complete { color: var(--blue); background: rgba(76,154,255,.12); }
+    .badge.media_complete .bdot { background: var(--blue); }
+    .badge.complete .bdot { background: var(--green); }
+    .badge.complete { color: var(--green); background: rgba(63,185,80,.12); }
+    .badge.failed { color: var(--red); background: rgba(248,81,73,.12); }
+    .badge.failed .bdot { background: var(--red); }
+    .badge.other { color: var(--amber); background: rgba(210,153,34,.12); }
+    .badge.other .bdot { background: var(--amber); }
+    .niche { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-faint); font-weight: 600; }
+    .card h3 { font-size: 16px; font-weight: 600; margin: 0 0 10px; line-height: 1.35; letter-spacing: -0.01em; }
+    .card .topic-empty { color: var(--text-faint); font-style: italic; font-weight: 400; }
+    .card-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; color: var(--text-faint); font-size: 12px; }
+    .has-video { display: inline-flex; align-items: center; gap: 5px; color: var(--accent); font-weight: 600; }
+
+    .empty {
+      text-align: center; padding: 80px 24px; border: 1px dashed var(--border);
+      border-radius: var(--radius); color: var(--text-dim);
+    }
+    .empty h2 { color: var(--text); font-size: 18px; margin: 0 0 10px; }
+    .empty code { background: var(--bg-card); border: 1px solid var(--border); padding: 2px 8px; border-radius: 6px; color: var(--accent); font-size: 13px; }
+    .empty p { margin: 8px 0; line-height: 1.6; }
+
+    /* detail overlay */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(3px);
+      display: none; align-items: flex-start; justify-content: center; padding: 48px 24px; z-index: 50; overflow-y: auto;
+    }
+    .overlay.open { display: flex; }
+    .panel {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px;
+      width: 100%; max-width: 720px; padding: 28px;
+    }
+    .panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+    .panel-head h2 { margin: 0 0 8px; font-size: 21px; letter-spacing: -0.02em; }
+    .close { background: none; border: 1px solid var(--border); color: var(--text-dim); width: 34px; height: 34px; border-radius: 9px; cursor: pointer; font-size: 18px; flex-shrink: 0; }
+    .close:hover { color: var(--text); border-color: #33404f; }
+    video { width: 100%; border-radius: 12px; background: #000; margin-bottom: 20px; display: block; }
+    .section-label { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-faint); font-weight: 700; margin: 22px 0 10px; }
+    .hook { font-size: 15px; line-height: 1.5; color: var(--text); background: rgba(110,168,254,.08); border-left: 3px solid var(--accent); padding: 12px 14px; border-radius: 0 8px 8px 0; }
+    .seg { border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+    .seg-num { font-size: 11px; color: var(--text-faint); font-weight: 700; margin-bottom: 6px; display: flex; gap: 10px; align-items: center; }
+    .seg-hero { color: var(--accent); }
+    .seg-vo { font-size: 14px; line-height: 1.5; margin-bottom: 8px; }
+    .seg-vis { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tag { font-size: 12px; color: var(--accent); background: rgba(110,168,254,.1); padding: 3px 10px; border-radius: 999px; }
+    .errors { color: var(--red); font-size: 13px; line-height: 1.6; background: rgba(248,81,73,.08); padding: 12px 14px; border-radius: 8px; }
+    .kv { color: var(--text-dim); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span class="dot"></span>
+      <div>
+        <h1>AI Content Agent <span>· Dashboard</span></h1>
+      </div>
+    </div>
+    <div class="meta">
+      <span><span class="count" id="job-count">0</span> jobs</span>
+      <span class="refresh"><span class="spin"></span> live</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="grid" id="grid"></div>
+  </main>
+
+  <div class="overlay" id="overlay">
+    <div class="panel" id="panel"></div>
+  </div>
+
+  <script>
+    const STATUS_LABEL = {
+      complete: "Complete", media_complete: "Video ready", failed: "Failed",
+      running: "Running", paused_for_human: "Awaiting review", idle: "Idle",
+    };
+    function badgeClass(s) {
+      if (s === "complete") return "complete";
+      if (s === "media_complete") return "media_complete";
+      if (s === "failed") return "failed";
+      return "other";
+    }
+    function relTime(iso) {
+      if (!iso) return "";
+      const then = new Date(iso), now = new Date();
+      const s = Math.max(0, (now - then) / 1000);
+      if (s < 60) return "just now";
+      if (s < 3600) return Math.floor(s / 60) + "m ago";
+      if (s < 86400) return Math.floor(s / 3600) + "h ago";
+      return Math.floor(s / 86400) + "d ago";
+    }
+    function esc(t) {
+      return (t == null ? "" : String(t)).replace(/[&<>"]/g, c =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    }
+
+    async function loadJobs() {
+      let jobs = [];
+      try { jobs = await (await fetch("/api/jobs")).json(); } catch (e) { return; }
+      document.getElementById("job-count").textContent = jobs.length;
+      const grid = document.getElementById("grid");
+
+      if (!jobs.length) {
+        grid.innerHTML = `<div class="empty" style="grid-column: 1/-1">
+          <h2>No jobs yet</h2>
+          <p>Add your free <code>GROQ_API_KEY</code> to <code>.env</code>, then run:</p>
+          <p><code>python -m orchestrator.runner</code></p>
+          <p style="color:var(--text-faint);margin-top:14px">Each run will appear here with its script and video.</p>
+        </div>`;
+        return;
+      }
+
+      grid.innerHTML = jobs.map(j => {
+        const bc = badgeClass(j.status);
+        const label = STATUS_LABEL[j.status] || j.status || "unknown";
+        const topic = j.topic
+          ? `<h3>${esc(j.topic)}</h3>`
+          : `<h3 class="topic-empty">(no topic)</h3>`;
+        return `<div class="card" onclick="openJob('${esc(j.job_id)}')">
+          <div class="card-top">
+            <span class="badge ${bc}"><span class="bdot"></span>${esc(label)}</span>
+            <span class="niche">${esc(j.niche)}</span>
+          </div>
+          ${topic}
+          <div class="card-foot">
+            <span>${esc(relTime(j.created_at))}</span>
+            ${j.has_video ? '<span class="has-video">▶ video</span>' : '<span style="color:var(--text-faint)">no video</span>'}
+          </div>
+        </div>`;
+      }).join("");
+    }
+
+    async function openJob(id) {
+      let job;
+      try { job = await (await fetch("/api/jobs/" + id)).json(); } catch (e) { return; }
+      const script = job.script || {};
+      const segs = script.segments || [];
+      const overlay = document.getElementById("overlay");
+      const panel = document.getElementById("panel");
+
+      const videoHtml = job.render_output_path
+        ? `<video controls src="/video/${esc(id)}"></video>` : "";
+
+      const hookHtml = script.hook
+        ? `<div class="section-label">Hook</div><div class="hook">${esc(script.hook)}</div>` : "";
+
+      const segsHtml = segs.length ? `<div class="section-label">Script — ${segs.length} scenes</div>` +
+        segs.map(s => `<div class="seg">
+          <div class="seg-num">SCENE ${esc(s.scene_number)} · ${esc(s.duration_sec)}s
+            ${s.character_visible ? '<span class="seg-hero">● hero</span>' : ''}</div>
+          <div class="seg-vo">${esc(s.voiceover_text)}</div>
+          <div class="seg-vis">🎬 ${esc(s.visual_direction)}</div>
+        </div>`).join("") : "";
+
+      const tagsHtml = (script.hashtags && script.hashtags.length)
+        ? `<div class="section-label">Hashtags</div><div class="tags">` +
+          script.hashtags.map(t => `<span class="tag">${esc(t)}</span>`).join("") + `</div>` : "";
+
+      const errHtml = (job.errors && job.errors.length)
+        ? `<div class="section-label">Errors</div><div class="errors">${job.errors.map(esc).join("<br>")}</div>` : "";
+
+      const bc = badgeClass(job.status);
+      const label = STATUS_LABEL[job.status] || job.status;
+
+      panel.innerHTML = `
+        <div class="panel-head">
+          <div>
+            <span class="badge ${bc}"><span class="bdot"></span>${esc(label)}</span>
+            <h2 style="margin-top:12px">${esc(job.topic || script.title || "(no topic)")}</h2>
+            <div class="kv">${esc(job.niche)} · ${esc(job.language)} · ${esc(job.format)} · ${esc(relTime(job.created_at))}</div>
+          </div>
+          <button class="close" onclick="closeJob()">×</button>
+        </div>
+        ${videoHtml}
+        ${hookHtml}
+        ${segsHtml}
+        ${tagsHtml}
+        ${script.outro_cta ? `<div class="section-label">Outro</div><div class="seg-vo">${esc(script.outro_cta)}</div>` : ""}
+        ${errHtml}
+      `;
+      overlay.classList.add("open");
+    }
+    function closeJob() { document.getElementById("overlay").classList.remove("open"); }
+    document.getElementById("overlay").addEventListener("click", e => {
+      if (e.target.id === "overlay") closeJob();
+    });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") closeJob(); });
+
+    loadJobs();
+    setInterval(loadJobs, 4000);
+  </script>
+</body>
+</html>
