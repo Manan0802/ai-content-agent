@@ -63,7 +63,12 @@ def test_run_job_wires_real_graph(monkeypatch):
     monkeypatch.setattr(render_mod.os.path, "exists", lambda p: True)
     monkeypatch.setattr(render_mod.os.path, "getsize", lambda p: 1024)
 
+    saved = {}
+    monkeypatch.setattr(runner, "save_job",
+                        lambda state, outputs_dir: saved.update(state=state))
+
     out = runner.run_job(niche="tech", mode="semi_auto", auto=True)
     assert out["status"] == "media_complete"
     assert out["topic"] == "Z"
     assert out["render_output_path"]
+    assert saved["state"]["job_id"] == out["job_id"]  # runner persisted the job

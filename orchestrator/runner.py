@@ -7,6 +7,7 @@ from integrations.hyperframes_tts import HyperFramesTTS
 from integrations.hyperframes_cli import HyperFramesCLI
 from agents.idea_generator import SeedTrendsProvider
 from modules.notifier import CLINotifier, AutoApproveNotifier
+from modules.job_store import save_job
 
 
 def run_job(niche=None, mode=None, fmt="short", auto=False):
@@ -27,7 +28,9 @@ def run_job(niche=None, mode=None, fmt="short", auto=False):
         hf_cli=HyperFramesCLI(),
         project_dir=project_dir,
     )
-    return app.invoke(state)
+    result = app.invoke(state)
+    save_job(result, SETTINGS.outputs_dir)
+    return result
 
 
 if __name__ == "__main__":
