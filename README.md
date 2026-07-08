@@ -29,7 +29,9 @@ copy .env.example .env          # then add your API keys (see below)
 ### Requirements
 
 - **Phase 1 (text):** a free [Groq](https://console.groq.com) API key (`GROQ_API_KEY`).
-- **Phase 2 (media):** a [fal.ai](https://fal.ai) key (`FAL_KEY`) for image generation, plus **Node.js ≥ 22** and **FFmpeg** on your PATH — the render step runs through the HyperFrames CLI (`npx hyperframes`). Voice (Kokoro) runs locally through that same CLI, no key needed.
+- **Phase 2 (media):** image generation, plus **Node.js ≥ 22** and **FFmpeg** on your PATH — the render step runs through the HyperFrames CLI (`npx hyperframes`). Voice (Kokoro) runs locally through that same CLI, no key needed.
+  - **Free (default):** `IMAGE_PROVIDER=pollinations` — [pollinations.ai](https://pollinations.ai), no key, zero cost. With this, the *entire* pipeline runs on just the free Groq key.
+  - **Paid (better character consistency):** `IMAGE_PROVIDER=fal` + a [fal.ai](https://fal.ai) key (`FAL_KEY`).
 - **Optional:** `CHARACTER_REF_IMAGE_URL` — a reference image for the recurring character. If unset, hero scenes fall back to plain B-roll generation, so the pipeline still runs end-to-end.
 
 ## Run

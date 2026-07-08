@@ -18,6 +18,7 @@ class Settings:
     default_language: str = "hinglish"
     default_mode: str = "semi_auto"
     fal_api_key: str | None = os.getenv("FAL_KEY")
+    image_provider: str = os.getenv("IMAGE_PROVIDER", "fal")  # fal | pollinations
     character_ref_image_url: str = os.getenv("CHARACTER_REF_IMAGE_URL", "")
     kokoro_voice: str = "af_heart"
     video_width: int = 1080

@@ -3,11 +3,18 @@ from orchestrator.state import new_state
 from orchestrator.graph import build_graph
 from integrations.groq_client import GroqClient
 from integrations.fal_client import FalClient
+from integrations.pollinations_client import PollinationsClient
 from integrations.hyperframes_tts import HyperFramesTTS
 from integrations.hyperframes_cli import HyperFramesCLI
 from agents.idea_generator import SeedTrendsProvider
 from modules.notifier import CLINotifier, AutoApproveNotifier
 from modules.job_store import save_job
+
+
+def _image_client():
+    if SETTINGS.image_provider == "pollinations":
+        return PollinationsClient(width=SETTINGS.video_width, height=SETTINGS.video_height)
+    return FalClient()
 
 
 def run_job(niche=None, mode=None, fmt="short", auto=False):
@@ -23,7 +30,7 @@ def run_job(niche=None, mode=None, fmt="short", auto=False):
         groq=groq,
         trends=SeedTrendsProvider(),
         notifier=notifier,
-        fal=FalClient(),
+        fal=_image_client(),
         tts=HyperFramesTTS(voice=SETTINGS.kokoro_voice),
         hf_cli=HyperFramesCLI(),
         project_dir=project_dir,

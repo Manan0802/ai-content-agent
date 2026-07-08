@@ -16,3 +16,4 @@ def test_settings_has_media_defaults():
     assert SETTINGS.character_ref_image_url == ""
     assert "AI" in SETTINGS.ai_disclosure_text
     assert SETTINGS.ai_disclosure_duration_sec == 3.0
+    assert SETTINGS.image_provider in {"fal", "pollinations"}
