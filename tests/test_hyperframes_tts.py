@@ -19,8 +19,9 @@ def test_synthesize_calls_cli_with_kokoro_pinned():
     out = tts.synthesize("Bhoot bangla real story", "out/scene_1.wav")
     assert out == "out/scene_1.wav"
     assert captured["cmd"][:3] == ["npx", "hyperframes", "tts"]
-    assert "--provider" in captured["cmd"] and "kokoro" in captured["cmd"]
     assert "--voice" in captured["cmd"] and "af_heart" in captured["cmd"]
+    # published tts CLI has no --provider flag (Kokoro-only build)
+    assert "--provider" not in captured["cmd"]
 
 
 def test_synthesize_raises_on_nonzero_exit():

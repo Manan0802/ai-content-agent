@@ -57,6 +57,7 @@ class FakeCLI:
 def test_run_job_wires_real_graph(monkeypatch):
     monkeypatch.setattr(runner, "GroqClient", FakeGroq)
     monkeypatch.setattr(runner, "FalClient", FakeFal)
+    monkeypatch.setattr(runner, "PollinationsClient", FakeFal)  # whichever provider config picks
     monkeypatch.setattr(runner, "HyperFramesTTS", FakeTTS)
     monkeypatch.setattr(runner, "HyperFramesCLI", FakeCLI)
     import agents.render as render_mod
