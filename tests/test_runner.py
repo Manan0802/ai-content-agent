@@ -54,12 +54,24 @@ class FakeCLI:
         pass
 
 
+class FakeYouTube:
+    def __init__(self, *a, **k):
+        pass
+
+    def is_configured(self):
+        return True
+
+    def upload_video(self, file_path, title, description, tags, privacy="unlisted"):
+        return "vid123"
+
+
 def test_run_job_wires_real_graph(monkeypatch):
     monkeypatch.setattr(runner, "GroqClient", FakeGroq)
     monkeypatch.setattr(runner, "FalClient", FakeFal)
     monkeypatch.setattr(runner, "PollinationsClient", FakeFal)  # whichever provider config picks
     monkeypatch.setattr(runner, "HyperFramesTTS", FakeTTS)
     monkeypatch.setattr(runner, "HyperFramesCLI", FakeCLI)
+    monkeypatch.setattr(runner, "YouTubeClient", FakeYouTube)
     import agents.render as render_mod
     monkeypatch.setattr(render_mod.os.path, "exists", lambda p: True)
     monkeypatch.setattr(render_mod.os.path, "getsize", lambda p: 1024)
@@ -69,7 +81,8 @@ def test_run_job_wires_real_graph(monkeypatch):
                         lambda state, outputs_dir: saved.update(state=state))
 
     out = runner.run_job(niche="tech", mode="semi_auto", auto=True)
-    assert out["status"] == "media_complete"
+    assert out["status"] == "published"
     assert out["topic"] == "Z"
     assert out["render_output_path"]
+    assert out["youtube_url"] == "https://youtu.be/vid123"
     assert saved["state"]["job_id"] == out["job_id"]  # runner persisted the job

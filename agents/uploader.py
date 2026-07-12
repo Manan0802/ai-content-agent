@@ -20,7 +20,7 @@ def uploader_node(state: ContentState, youtube, notifier) -> ContentState:
     if not state.get("render_output_path"):
         state.setdefault("errors", []).append("uploader: no rendered video to upload — skipped")
         return state
-    if not youtube.is_configured():
+    if youtube is None or not youtube.is_configured():
         state.setdefault("errors", []).append("uploader: youtube not configured — skipped upload")
         return state
 

@@ -7,6 +7,7 @@ from agents.visuals import visuals_node
 from agents.voiceover import voiceover_node
 from agents.composition_writer import composition_writer_node
 from agents.render import render_node
+from agents.uploader import uploader_node
 from config import SETTINGS
 
 
@@ -71,7 +72,11 @@ def _render(state, hf_cli, notifier, project_dir):
     return render_node(state, cli=hf_cli, notifier=notifier, project_dir=project_dir)
 
 
-def build_graph(groq, trends, notifier, fal=None, tts=None, hf_cli=None,
+def _uploader(state, youtube, notifier):
+    return uploader_node(state, youtube=youtube, notifier=notifier)
+
+
+def build_graph(groq, trends, notifier, fal=None, tts=None, hf_cli=None, youtube=None,
                 project_dir="outputs/job", checkpoint_path=":memory:"):
     g = StateGraph(ContentState)
     g.add_node("idea_generator", partial(_idea, groq=groq, trends=trends))
@@ -82,6 +87,7 @@ def build_graph(groq, trends, notifier, fal=None, tts=None, hf_cli=None,
     g.add_node("voiceover", partial(_voiceover, tts=tts, project_dir=project_dir))
     g.add_node("composition_writer", partial(_composition, project_dir=project_dir))
     g.add_node("render", partial(_render, hf_cli=hf_cli, notifier=notifier, project_dir=project_dir))
+    g.add_node("uploader", partial(_uploader, youtube=youtube, notifier=notifier))
 
     g.set_entry_point("idea_generator")
     g.add_edge("idea_generator", "hitl_topic")
@@ -93,5 +99,6 @@ def build_graph(groq, trends, notifier, fal=None, tts=None, hf_cli=None,
     g.add_edge("visuals", "voiceover")
     g.add_edge("voiceover", "composition_writer")
     g.add_edge("composition_writer", "render")
-    g.add_edge("render", END)
+    g.add_edge("render", "uploader")
+    g.add_edge("uploader", END)
     return g.compile()

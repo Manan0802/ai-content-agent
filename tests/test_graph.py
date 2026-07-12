@@ -41,6 +41,14 @@ class FakeCLI:
         pass
 
 
+class FakeYouTube:
+    def is_configured(self):
+        return True
+
+    def upload_video(self, file_path, title, description, tags, privacy="unlisted"):
+        return "vid123"
+
+
 IDEAS = json.dumps({"ideas": [
     {"title": "Best One", "hook": "h", "format": "short", "niche": "horror",
      "tone": "dark", "viral_score": 95}]})
@@ -95,3 +103,18 @@ def test_full_run_produces_rendered_video(monkeypatch, tmp_path):
     out = app.invoke(s)
     assert out["status"] == "media_complete"
     assert out["render_output_path"]
+
+
+def test_full_run_publishes_when_youtube_configured(monkeypatch, tmp_path):
+    import agents.render as render_mod
+    monkeypatch.setattr(render_mod.os.path, "exists", lambda p: True)
+    monkeypatch.setattr(render_mod.os.path, "getsize", lambda p: 1024)
+
+    app = build_graph(groq=FakeGroq(IDEAS, SCRIPT_WITH_SEGMENTS), trends=SeedTrendsProvider(),
+                      notifier=AutoApproveNotifier(), fal=FakeFal(), tts=FakeTTS(),
+                      hf_cli=FakeCLI(), youtube=FakeYouTube(), project_dir=str(tmp_path))
+    s = new_state("horror", "semi_auto", "hinglish", "short",
+                  ["topic", "script", "render", "publish"])
+    out = app.invoke(s)
+    assert out["status"] == "published"
+    assert out["youtube_url"] == "https://youtu.be/vid123"
