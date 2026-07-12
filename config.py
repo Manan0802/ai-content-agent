@@ -26,6 +26,11 @@ class Settings:
     outputs_dir: str = "outputs"
     ai_disclosure_text: str = "This video was made using AI-generated voice and visuals."
     ai_disclosure_duration_sec: float = 3.0
+    youtube_client_id: str | None = os.getenv("YOUTUBE_CLIENT_ID")
+    youtube_client_secret: str | None = os.getenv("YOUTUBE_CLIENT_SECRET")
+    youtube_refresh_token: str | None = os.getenv("YOUTUBE_REFRESH_TOKEN")
+    youtube_privacy: str = os.getenv("YOUTUBE_PRIVACY", "unlisted")
+    publish_platform: str = os.getenv("PUBLISH_PLATFORM", "youtube")
 
 
 SETTINGS = Settings()

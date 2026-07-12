@@ -17,3 +17,5 @@ def test_settings_has_media_defaults():
     assert "AI" in SETTINGS.ai_disclosure_text
     assert SETTINGS.ai_disclosure_duration_sec == 3.0
     assert SETTINGS.image_provider in {"fal", "pollinations"}
+    assert SETTINGS.youtube_privacy == "unlisted"
+    assert SETTINGS.publish_platform == "youtube"
