@@ -17,12 +17,13 @@ _HEAD = """<!doctype html>
                   text-align: center; text-shadow: 0 2px 8px rgba(0,0,0,.8); }}
       .disclosure-text {{ font-size: 40px; text-align: center; padding: 0 8%; }}
       .ai-label {{ inset: auto; top: 3%; right: 4%; bottom: auto; left: auto; font-size: 22px;
-                   color: #fff; background: rgba(0,0,0,.55); padding: 6px 14px; border-radius: 8px; }}
+                   color: #fff; background: rgba(0,0,0,.55); padding: 6px 14px; border-radius: 8px;
+                   z-index: 9999; }}
     </style>
   </head>
   <body>
     <div id="root" data-composition-id="{comp_id}" data-start="0" data-width="{width}" data-height="{height}" data-duration="{duration}">
-      <div id="ai-label" class="clip ai-label" data-start="0" data-duration="{duration}" data-track-index="0">AI-Generated</div>
+      <div id="ai-label" class="clip ai-label" data-start="0" data-duration="{duration}" data-track-index="20">AI-Generated</div>
 """
 
 _TAIL = """    </div>
