@@ -33,6 +33,7 @@ copy .env.example .env          # then add your API keys (see below)
   - **Free (default):** `IMAGE_PROVIDER=pollinations` — [pollinations.ai](https://pollinations.ai), no key, zero cost. With this, the *entire* pipeline runs on just the free Groq key.
   - **Paid (better character consistency):** `IMAGE_PROVIDER=fal` + a [fal.ai](https://fal.ai) key (`FAL_KEY`).
 - **Optional:** `CHARACTER_REF_IMAGE_URL` — a reference image for the recurring character. If unset, hero scenes fall back to plain B-roll generation, so the pipeline still runs end-to-end.
+- **Phase 3 (publish) — optional:** to auto-upload to YouTube (unlisted), set up OAuth (see **Publishing** below). If unconfigured, the pipeline still finishes at `media_complete` — the video just isn't uploaded.
 
 ## Run
 
@@ -40,7 +41,21 @@ copy .env.example .env          # then add your API keys (see below)
 python -m orchestrator.runner
 ```
 
-Generates topic ideas for the default niche, writes a script, generates voice + visuals, renders a video, and asks you to approve at each gate (topic, script, render) in the console. Produces `outputs/<job_id>/render/final.mp4`.
+Generates topic ideas for the default niche, writes a script, generates voice + visuals, renders a video, and (if YouTube is configured) uploads it — asking you to approve at each gate (topic, script, render, publish) in the console. Produces `outputs/<job_id>/render/final.mp4`.
+
+## Publishing to YouTube (Phase 3)
+
+Uploads the rendered video as **unlisted** (review it on YouTube, then make it public yourself). One-time setup:
+
+1. In [Google Cloud Console](https://console.cloud.google.com), create a project and enable **YouTube Data API v3**.
+2. Create an **OAuth 2.0 Client ID** (type: *Desktop app*). Put the id/secret in `.env` as `YOUTUBE_CLIENT_ID` / `YOUTUBE_CLIENT_SECRET`.
+3. Run the one-time consent once — it opens a browser and writes your refresh token to `.env`:
+   ```bash
+   python -m scripts.youtube_auth
+   ```
+4. Apply for a **quota audit early** — the default quota allows only ~6 uploads/day and Google's review takes weeks.
+
+Notes: Shorts are auto-tagged with `#Shorts` in the description; custom thumbnails are intentionally skipped (YouTube rejects them for Shorts); Instagram publishing is a later phase (needs a Business account + Meta review).
 
 ## Dashboard
 
@@ -68,6 +83,6 @@ LangGraph · langchain-groq · fal-client · HyperFrames (Kokoro TTS + HTML→vi
 
 - **Phase 1** ✅ Text spine (orchestrator, state, idea + script agents, HITL CLI)
 - **Phase 2** ✅ Voice (Kokoro) + visuals (fal FLUX.2 hero + FLUX.1 schnell B-roll) + HyperFrames render + AI-content disclosure
-- **Phase 3** YouTube/Instagram upload + thumbnails + analytics
+- **Phase 3** ✅ YouTube unlisted upload (HITL-gated, #Shorts, OAuth) — Instagram + analytics deferred
 - **Phase 4** Scheduler, retry/recovery, first real videos
 - **Phase 5** VoxCPM2 / Sarvam cloud voice, Postiz multi-platform, WhatsApp notifier (green-api), analytics feedback loop

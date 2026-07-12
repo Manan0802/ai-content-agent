@@ -141,11 +141,11 @@
 
   <script>
     const STATUS_LABEL = {
-      complete: "Complete", media_complete: "Video ready", failed: "Failed",
-      running: "Running", paused_for_human: "Awaiting review", idle: "Idle",
+      complete: "Complete", media_complete: "Video ready", published: "Published",
+      failed: "Failed", running: "Running", paused_for_human: "Awaiting review", idle: "Idle",
     };
     function badgeClass(s) {
-      if (s === "complete") return "complete";
+      if (s === "complete" || s === "published") return "complete";
       if (s === "media_complete") return "media_complete";
       if (s === "failed") return "failed";
       return "other";
@@ -211,6 +211,9 @@
       const videoHtml = job.render_output_path
         ? `<video controls src="/video/${esc(id)}"></video>` : "";
 
+      const ytHtml = job.youtube_url
+        ? `<div class="section-label">Published</div><a class="tag" href="${esc(job.youtube_url)}" target="_blank" rel="noopener">▶ ${esc(job.youtube_url)}</a>` : "";
+
       const hookHtml = script.hook
         ? `<div class="section-label">Hook</div><div class="hook">${esc(script.hook)}</div>` : "";
 
@@ -242,6 +245,7 @@
           <button class="close" onclick="closeJob()">×</button>
         </div>
         ${videoHtml}
+        ${ytHtml}
         ${hookHtml}
         ${segsHtml}
         ${tagsHtml}
