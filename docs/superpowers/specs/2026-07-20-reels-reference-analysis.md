@@ -91,6 +91,50 @@ The consistency *within a series* is the hard part and the differentiator. That'
 6. **"Fictional story" disclaimer** on story content (pairs with the AI-disclosure label we already render).
 7. Prioritise topic buckets 1, 3, 4, 5 (anthropomorphic health, nostalgia, ironic humour, bhakti) — all high-performing and zero ban risk.
 
+## ⭐ The most important data: view counts per topic (aihealthstudio764, 12 reels)
+
+Pulled from their Reels tab, which exposes per-reel view counts. Same account, same art style, same format — **only the topic changes**. So this isolates topic choice as the variable.
+
+| Topic | Views |
+|---|---|
+| 😱 रोज़-रोज़ मोमोज़-चाउमीन? | **8.6M** |
+| बिड़ी VS पोटी — कौन दोषी? | **7.1M** |
+| पेशाब की नली में पथरी | **5.1M** |
+| क्या आप भी GAS से परेशान हैं? | **4.8M** |
+| क्या तुम भी रात में mobile चलाते हो? | **1M** |
+| मालिक का BREAKUP हो गया | 162k |
+| मिलावटी खाना — शरीर के अंदर क्या होता है? | 131k |
+| (organ factory scene) | 86.2k |
+| रोज-रोज TEEKHE MOMOS | 35.4k |
+| बारिश में चाय पकोड़े | 30.9k |
+| रोज़ जेल लगाते हो? बाल क्यों गिर रहे? | 25.7k |
+| मुँह में बीड़ी की बंस? | **6,992** |
+
+### What this actually tells us
+
+**1. It is a hit-driven business, not a steady one.** Five reels did 1M–8.6M. The other seven did 7k–162k. Those 5 hits built the entire 80K following. Expect most videos to do modest numbers — the strategy has to be *volume of consistent-quality attempts*, because a small number of them carry everything. This is the single most important expectation to set.
+
+**2. Topic beats execution.** Identical art style, identical format, identical account — and the spread is 6,992 vs 8,600,000. A **1,200x** difference driven purely by topic choice. Getting the graphics right is necessary but nowhere near sufficient.
+
+**3. The mega-hits share one exact formula:**
+
+> **A habit almost EVERY Indian has  +  a scary bodily consequence  +  anthropomorphic character drama**
+
+- मोमोज़/चाउमीन — everyone eats it
+- GAS — everyone gets it
+- पथरी (kidney stone) — everyone fears it
+- रात में मोबाइल — everyone does it
+- बीड़ी vs पोटी — universal + shock/toilet humour
+
+**4. The flops are all "narrow habit" topics:**
+- बीड़ी की बंस (6,992) — only smokers care
+- हेयर जेल (25.7k) — only gel users
+- चाय पकोड़े (30.9k) — nostalgic but has **no fear hook**, nothing to be scared of
+
+The winning emotional trigger is *"oh no, I do that"* — self-recognition plus a threat. Nostalgia alone (चाय पकोड़े) underperforms in this niche by ~200x compared to fear-based topics.
+
+**Topic selection rule for our `idea_generator`:** score every candidate on (a) *what % of Indians do this daily?* and (b) *is there a visceral, scary consequence?* Only generate when both are high. This is directly encodable as a scoring prompt.
+
 ## Ready-to-use topic list (generated from the observed formula)
 
 **Bucket A — "Body on trial" (aihealthstudio764 template, courtroom device):**
