@@ -15,6 +15,33 @@ Analysis of 8 reference reels supplied by Manan, viewed live on Instagram. Purpo
 | 7 | `shadow_files0` | same story | PART 2 | 17.6K | 161 |
 | 8 | `shadow_files0` | same story | PART 4 | **25.3K** | **552** |
 
+## Account-level data (profiles checked live)
+
+| Account | Posts | Followers | Bio / niche |
+|---|---|---|---|
+| `realistic_crime` | **40** | **107K** | "AI Creator \| Ghibli Visuals ✨" — crime serials |
+| `aihealthstudio764` | **32** | **80K** | "AI Talking Foods & Organs · Funny Health Stories in Hindi" |
+| `shadow_files0` | **26** | **11K** | "Thriller • Suspense • Horror · Dark Stories & Hidden Secrets · Animated Short Stories" (also runs YouTube @theshadowfiles001) |
+
+**This is the headline finding.** All three are low-post-count accounts — 26 to 40 posts — sitting on 11K–107K followers. None of them has a back catalogue of hundreds of videos. A consistent daily output for one month puts you at their post count. The barrier is *quality and format discipline*, not volume or age.
+
+Also note: all three follow **0 accounts** — pure content plays, no engagement-farming.
+
+## The winning visual formula (aihealthstudio764 — the most replicable)
+
+Their entire grid runs one repeatable template:
+
+- **Premise:** an everyday Indian habit is put on trial — momos/chowmein, gas, beedi, hair gel, chai-pakode, phone addiction.
+- **Cast:** anthropomorphic 3D characters — brain, stomach, heart, liver, plus the "villain" product (cigarette, hair-gel bottle, momo) — all with big expressive angry/scared faces, Pixar-grade render.
+- **Recurring narrative device: a COURTROOM.** "बिड़ी VS पोटी — कौन दोषी?" and "रोज़-रोज़ जेल लगाते हो? बाल क्यों गिर रहे हैं?" both stage the brain as a judge in a wig, with the offending products as defendants. It's a template you can refill infinitely with new topics.
+- **Text:** huge Devanagari Hindi at the **top** of frame — yellow/white/red, thick black stroke, always a **question**.
+- **Lighting:** dramatic warm/red, high contrast, cinematic.
+- **Branding:** "AI Health Studio" painted *inside the scene* (on the judge's bench) — native branding that survives resharing.
+
+`shadow_files0` runs the same discipline for thriller: one consistent illustrated art style, the *same two protagonists* across every part, night/car/forest settings, Hindi dialogue in speech bubbles.
+
+The common thread is **style consistency across the whole catalogue** — every post looks like it came from the same studio. That is exactly what a locked style prompt + character reference gives us.
+
 ## The single biggest finding: multi-part engagement compounds
 
 `shadow_files0`'s series shows **later parts outperform Part 1** — likes 18.8K → 25.3K, comments **64 → 552 (8.6x)**. The comment sections are dominated by *"Next part"*, *"Next episode"*, *"Continue"*. The cliffhanger genuinely converts viewers into a returning audience that comments to demand more.
@@ -63,6 +90,46 @@ The consistency *within a series* is the hard part and the differentiator. That'
 5. **Watermark/logo** baked into every frame.
 6. **"Fictional story" disclaimer** on story content (pairs with the AI-disclosure label we already render).
 7. Prioritise topic buckets 1, 3, 4, 5 (anthropomorphic health, nostalgia, ironic humour, bhakti) — all high-performing and zero ban risk.
+
+## Ready-to-use topic list (generated from the observed formula)
+
+**Bucket A — "Body on trial" (aihealthstudio764 template, courtroom device):**
+1. मोमोज़ vs चाउमीन — पेट का फैसला
+2. बीड़ी vs पोटी — कौन दोषी?
+3. रोज़ जेल लगाते हो? बाल क्यों गिर रहे हैं?
+4. चाय खाली पेट — दिल की शिकायत
+5. कोल्ड ड्रिंक vs दांत — 20 साल की सज़ा
+6. रात 2 बजे मोबाइल — आँखों का मुकदमा
+7. मैदा vs आटा — आंतों की अदालत
+8. AC में सोना — गले की FIR
+9. Protein powder — किडनी का बयान
+10. Late night biryani — लिवर का गुस्सा
+
+**Bucket B — Nostalgia (ai_reels_hub01 template):**
+11. बारिश + कार्टून + मम्मी के पकोड़े
+12. गर्मी की छुट्टी — नानी का घर
+13. स्कूल की आखिरी बेंच
+14. 90s का टीवी — रविवार सुबह
+15. पापा की साइकिल पर पहली सवारी
+
+**Bucket C — Thriller serial (shadow_files0 template, 5-6 parts):**
+16. "डिलीवरी" — रात 9:22 की घंटी
+17. "आखिरी बस" — सुनसान सड़क
+18. "किरायेदार" — ऊपर वाला कमरा
+19. "पुराना फोन" — जो खुद डायल करता है
+20. "शादी का एल्बम" — एक चेहरा गायब
+
+**Bucket D — Bhakti / mythology mystery (needs stronger execution than the reference):**
+21. जगन्नाथ रथ यात्रा के 9 रहस्य
+22. केदारनाथ — 2013 में मंदिर कैसे बचा
+23. शनि देव — साढ़ेसाती का सच
+24. हनुमान जी आज भी जीवित हैं?
+25. सोमनाथ मंदिर — 17 बार लूटा गया
+
+**Bucket E — Ironic everyday humour (krjha176 template — the 900K one):**
+26. "Five star dinner" — गाँव की थाली
+27. "Home gym" — खेत का काम
+28. "Luxury AC" — पेड़ की छाँव
 
 ## Honest caveats
 
