@@ -11,6 +11,7 @@ class ContentState(TypedDict, total=False):
     niche: str
     language: str
     format: str          # short | long
+    format_profile: str  # joke_10s | montage_35s | drama_50s | serial_75s (modules/formats.py)
     topic: str
     topic_candidates: list[dict]
     script: dict
@@ -27,7 +28,7 @@ class ContentState(TypedDict, total=False):
 
 
 def new_state(niche: str, mode: str, language: str, format: str,
-              hitl_checkpoints: list[str]) -> ContentState:
+              hitl_checkpoints: list[str], format_profile: str = "") -> ContentState:
     return ContentState(
         job_id=str(uuid.uuid4())[:8],
         created_at=datetime.now(timezone.utc).isoformat(),
@@ -36,6 +37,7 @@ def new_state(niche: str, mode: str, language: str, format: str,
         niche=niche,
         language=language,
         format=format,
+        format_profile=format_profile,
         topic="",
         topic_candidates=[],
         script={},
