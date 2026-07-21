@@ -17,6 +17,10 @@ class Settings:
     default_niche: str = "horror"
     default_language: str = "hinglish"
     default_mode: str = "semi_auto"
+    default_format: str = os.getenv("DEFAULT_FORMAT", "drama_50s")
+    supported_languages: list[str] = field(
+        default_factory=lambda: ["hindi", "hinglish", "haryanvi", "punjabi"]
+    )
     fal_api_key: str | None = os.getenv("FAL_KEY")
     image_provider: str = os.getenv("IMAGE_PROVIDER", "fal")  # fal | pollinations
     character_ref_image_url: str = os.getenv("CHARACTER_REF_IMAGE_URL", "")
