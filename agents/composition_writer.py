@@ -19,6 +19,17 @@ _HEAD = """<!doctype html>
       .ai-label {{ inset: auto; top: 3%; right: 4%; bottom: auto; left: auto; font-size: 22px;
                    color: #fff; background: rgba(0,0,0,.55); padding: 6px 14px; border-radius: 8px;
                    z-index: 9999; }}
+      /* on-screen dialogue: big Devanagari at the TOP of frame, matching the reference accounts */
+      .dialogue {{ position: absolute; top: 8%; left: 5%; right: 5%; font-size: 62px;
+                   font-weight: 800; line-height: 1.25; text-align: center; color: #fff;
+                   -webkit-text-stroke: 3px #000; text-shadow: 0 4px 16px rgba(0,0,0,.9);
+                   z-index: 50; }}
+      .speaker {{ display: block; font-size: 30px; font-weight: 700; color: #ffd54a;
+                  -webkit-text-stroke: 2px #000; margin-bottom: 10px; }}
+      .part-badge {{ inset: auto; top: 3%; left: 4%; bottom: auto; right: auto; font-size: 30px;
+                     font-weight: 800; color: #fff; background: rgba(200,20,20,.85);
+                     padding: 8px 18px; border-radius: 8px; z-index: 9999;
+                     -webkit-text-stroke: 1px #000; }}
     </style>
   </head>
   <body>
@@ -38,7 +49,8 @@ _TAIL = """    </div>
 
 def composition_writer_node(state: ContentState, project_dir: str,
                             width: int = 1080, height: int = 1920,
-                            disclosure_duration_sec: float = 3.0) -> ContentState:
+                            disclosure_duration_sec: float = 3.0,
+                            bgm_volume: float = 0.25) -> ContentState:
     try:
         segments = state["script"]["segments"]
         visuals = {v["scene_number"]: v for v in state.get("visual_assets", [])}
@@ -61,16 +73,26 @@ def composition_writer_node(state: ContentState, project_dir: str,
             )
             cursor += disclosure_duration_sec
 
+        # speaker id -> display name, so we can label lines when there is more than one character
+        chars = state.get("script", {}).get("characters", []) or []
+        names = {c.get("id"): c.get("name", "") for c in chars}
+        show_speaker = len(chars) > 1
+
         for seg in segments:
             dur = float(seg["duration_sec"])
             image = visuals.get(seg["scene_number"], {}).get("image_url", "")
-            text = seg.get("voiceover_text", "")
+            # v2 scripts carry `dialogue` (+ speaker); Phase-1 ones carried `voiceover_text`
+            text = seg.get("dialogue") or seg.get("voiceover_text", "")
+            speaker_name = names.get(seg.get("speaker"), "") if show_speaker else ""
             scene_id = f"scene-{seg['scene_number']}"
+            speaker_html = (
+                f'<span class="speaker">{speaker_name}</span>' if speaker_name else ""
+            )
             clips.append(
                 f'      <section id="{scene_id}" class="clip" data-start="{cursor}" data-duration="{dur}" '
                 f'data-track-index="1">\n'
                 f'        <img src="{image}" crossorigin="anonymous" />\n'
-                f'        <p class="caption">{text}</p>\n'
+                f'        <p class="dialogue">{speaker_html}{text}</p>\n'
                 f'      </section>'
             )
             audio_path = audio_assets.get(seg["scene_number"], {}).get("audio_path", "")
@@ -82,10 +104,29 @@ def composition_writer_node(state: ContentState, project_dir: str,
                 )
             cursor += dur
 
+        # music mode: one BGM track under the whole video instead of per-scene voiceover
+        bgm = state.get("bgm_path", "")
+        if bgm and os.path.exists(bgm):
+            rel = os.path.relpath(bgm, project_dir)
+            media_tags.append(
+                f'      <audio id="bgm" data-start="0" data-duration="{cursor}" '
+                f'data-track-index="11" data-volume="{bgm_volume}" src="{rel}"></audio>'
+            )
+
+        # PART N badge for serialised videos
+        part = state.get("part_number", 0)
+        part_html = ""
+        if part:
+            part_html = (
+                f'      <div id="part-badge" class="clip part-badge" data-start="0" '
+                f'data-duration="{cursor}" data-track-index="21">PART {part}</div>\n'
+            )
+
         html = (
             _HEAD.format(width=width, height=height,
                          title=state["script"].get("title", "Untitled"),
                          comp_id=state["job_id"], duration=cursor)
+            + part_html
             + "\n".join(clips) + "\n" + "\n".join(media_tags) + "\n"
             + _TAIL.format(comp_id=state["job_id"])
         )
