@@ -25,6 +25,10 @@ class ContentState(TypedDict, total=False):
     render_output_path: str
     youtube_video_id: str
     youtube_url: str
+    voice_map: dict
+    bgm_path: str
+    series_id: str
+    part_number: int
 
 
 def new_state(niche: str, mode: str, language: str, format: str,
@@ -51,4 +55,8 @@ def new_state(niche: str, mode: str, language: str, format: str,
         render_output_path="",
         youtube_video_id="",
         youtube_url="",
+        voice_map={},
+        bgm_path="",
+        series_id="",
+        part_number=0,
     )

@@ -18,6 +18,8 @@ class Settings:
     default_language: str = "hinglish"
     default_mode: str = "semi_auto"
     default_format: str = os.getenv("DEFAULT_FORMAT", "drama_50s")
+    music_dir: str = os.getenv("MUSIC_DIR", "assets/music")
+    bgm_volume: float = 0.25
     supported_languages: list[str] = field(
         default_factory=lambda: ["hindi", "hinglish", "haryanvi", "punjabi"]
     )

@@ -3,6 +3,7 @@ from orchestrator.state import ContentState
 from integrations.hyperframes_tts import HyperFramesTTS
 from modules.formats import get_format
 from modules.voices import assign_voices
+from modules.music import mood_for_niche, pick_track
 
 
 def _audio_mode(state: ContentState) -> str:
@@ -21,7 +22,7 @@ def _line_of(seg: dict) -> str:
 
 
 def voiceover_node(state: ContentState, tts: HyperFramesTTS, output_dir: str,
-                   disclosure_text: str = "") -> ContentState:
+                   disclosure_text: str = "", music_dir: str = "") -> ContentState:
     try:
         # Music-mode formats (thriller/nostalgia) have NO voiceover at all — a BGM track plays
         # and the dialogue is burned on screen. Matches shadow_files0 / realistic_crime.
@@ -29,6 +30,17 @@ def voiceover_node(state: ContentState, tts: HyperFramesTTS, output_dir: str,
             state["audio_assets"] = []
             state["disclosure_audio_path"] = ""
             state["voice_map"] = {}
+            if music_dir:
+                mood = mood_for_niche(state.get("niche", ""))
+                seed = state.get("series_id") or state.get("job_id", "")
+                track = pick_track(mood, music_dir, seed=seed)
+                state["bgm_path"] = track or ""
+                if not track:
+                    state.setdefault("errors", []).append(
+                        f"music: no {mood} track in {music_dir} — rendering silent"
+                    )
+            else:
+                state["bgm_path"] = ""
             return state
 
         os.makedirs(output_dir, exist_ok=True)
