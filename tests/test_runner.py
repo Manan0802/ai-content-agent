@@ -33,7 +33,7 @@ class FakeTTS:
     def __init__(self, *a, **k):
         pass
 
-    def synthesize(self, text, output_path):
+    def synthesize(self, text, output_path, voice=None):
         return output_path
 
 

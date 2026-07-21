@@ -11,10 +11,11 @@ class HyperFramesTTS:
         # Point it at the interpreter running us (our venv has those installed).
         self._python = python_exe or sys.executable
 
-    def synthesize(self, text: str, output_path: str) -> str:
+    def synthesize(self, text: str, output_path: str, voice: str | None = None) -> str:
         # The published `hyperframes tts` CLI is the local Kokoro-only build:
         # it has no --provider flag (Kokoro is the only engine). Voice via --voice.
-        cmd = ["npx", "hyperframes", "tts", text, "-o", output_path, "--voice", self._voice]
+        cmd = ["npx", "hyperframes", "tts", text, "-o", output_path,
+               "--voice", voice or self._voice]
         env = {**os.environ, "HYPERFRAMES_PYTHON": self._python}
         result = self._run(cmd, capture_output=True, text=True, env=env)
         if result.returncode != 0:

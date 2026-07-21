@@ -6,7 +6,7 @@ class FakeTTS:
     def __init__(self):
         self.calls = []
 
-    def synthesize(self, text, output_path):
+    def synthesize(self, text, output_path, voice=None):
         self.calls.append((text, output_path))
         return output_path
 

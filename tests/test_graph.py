@@ -23,7 +23,7 @@ class FakeFal:
 
 
 class FakeTTS:
-    def synthesize(self, text, output_path):
+    def synthesize(self, text, output_path, voice=None):
         return output_path
 
 
