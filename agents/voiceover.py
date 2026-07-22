@@ -22,7 +22,8 @@ def _line_of(seg: dict) -> str:
 
 
 def voiceover_node(state: ContentState, tts: HyperFramesTTS, output_dir: str,
-                   disclosure_text: str = "", music_dir: str = "") -> ContentState:
+                   disclosure_text: str = "", music_dir: str = "",
+                   bgm_mode: str = "baked") -> ContentState:
     try:
         # Music-mode formats (thriller/nostalgia) have NO voiceover at all — a BGM track plays
         # and the dialogue is burned on screen. Matches shadow_files0 / realistic_crime.
@@ -30,7 +31,7 @@ def voiceover_node(state: ContentState, tts: HyperFramesTTS, output_dir: str,
             state["audio_assets"] = []
             state["disclosure_audio_path"] = ""
             state["voice_map"] = {}
-            if music_dir:
+            if music_dir and bgm_mode == "baked":
                 mood = mood_for_niche(state.get("niche", ""))
                 seed = state.get("series_id") or state.get("job_id", "")
                 track = pick_track(mood, music_dir, seed=seed)

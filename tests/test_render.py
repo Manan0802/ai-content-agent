@@ -38,8 +38,8 @@ def _state():
 
 def test_render_completes_on_approval(monkeypatch):
     import agents.render as render_mod
-    monkeypatch.setattr(render_mod.os.path, "exists", lambda p: True)
-    monkeypatch.setattr(render_mod.os.path, "getsize", lambda p: 1024)
+    monkeypatch.setattr(render_mod, "_exists", lambda p: True)
+    monkeypatch.setattr(render_mod, "_getsize", lambda p: 1024)
     out = render_node(_state(), cli=FakeCLI(), notifier=ApproveNotifier(), project_dir="proj")
     assert out["status"] == "media_complete"
     assert out["render_output_path"]

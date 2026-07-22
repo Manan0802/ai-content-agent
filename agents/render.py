@@ -1,6 +1,11 @@
 import os
 from orchestrator.state import ContentState
 
+# Bound at module level so tests can substitute them without patching the global `os.path`
+# (patching os.path.exists globally also breaks os.makedirs, which relies on it internally).
+_exists = os.path.exists
+_getsize = os.path.getsize
+
 
 def render_node(state: ContentState, cli, notifier, project_dir: str) -> ContentState:
     try:
@@ -25,7 +30,7 @@ def render_node(state: ContentState, cli, notifier, project_dir: str) -> Content
     output_path = os.path.join(project_dir, "render", "final.mp4")
     try:
         cli.render(project_dir, output_path, quality="high")
-        if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
+        if not _exists(output_path) or _getsize(output_path) == 0:
             raise RuntimeError("render produced no output")
         state["render_output_path"] = output_path
         state["status"] = "media_complete"

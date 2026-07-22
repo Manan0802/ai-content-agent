@@ -19,6 +19,10 @@ class Settings:
     default_mode: str = "semi_auto"
     default_format: str = os.getenv("DEFAULT_FORMAT", "drama_50s")
     music_dir: str = os.getenv("MUSIC_DIR", "assets/music")
+    # "silent": render music-mode videos with no audio track — you add trending audio in the
+    #   Instagram / YouTube app at upload time (more reach; trending audio can't be set via API).
+    # "baked": mix a track from assets/music/<mood>/ into the video (fully automated).
+    bgm_mode: str = os.getenv("BGM_MODE", "silent")
     bgm_volume: float = 0.25
     supported_languages: list[str] = field(
         default_factory=lambda: ["hindi", "hinglish", "haryanvi", "punjabi"]

@@ -59,13 +59,16 @@ def _visuals(state, fal):
 
 def _voiceover(state, tts, project_dir):
     return voiceover_node(state, tts=tts, output_dir=f"{project_dir}/assets/audio",
-                          disclosure_text=SETTINGS.ai_disclosure_text)
+                          disclosure_text=SETTINGS.ai_disclosure_text,
+                          music_dir=SETTINGS.music_dir,
+                          bgm_mode=SETTINGS.bgm_mode)
 
 
 def _composition(state, project_dir):
     return composition_writer_node(state, project_dir=project_dir,
                                     width=SETTINGS.video_width, height=SETTINGS.video_height,
-                                    disclosure_duration_sec=SETTINGS.ai_disclosure_duration_sec)
+                                    disclosure_duration_sec=SETTINGS.ai_disclosure_duration_sec,
+                                    bgm_volume=SETTINGS.bgm_volume)
 
 
 def _render(state, hf_cli, notifier, project_dir):
@@ -77,7 +80,8 @@ def _uploader(state, youtube, notifier):
 
 
 def build_graph(groq, trends, notifier, fal=None, tts=None, hf_cli=None, youtube=None,
-                project_dir="outputs/job", checkpoint_path=":memory:"):
+                project_dir="outputs/job", checkpoint_path=":memory:",
+                entry: str = "idea_generator"):
     g = StateGraph(ContentState)
     g.add_node("idea_generator", partial(_idea, groq=groq, trends=trends))
     g.add_node("hitl_topic", partial(_hitl_topic, notifier=notifier))
@@ -89,7 +93,7 @@ def build_graph(groq, trends, notifier, fal=None, tts=None, hf_cli=None, youtube
     g.add_node("render", partial(_render, hf_cli=hf_cli, notifier=notifier, project_dir=project_dir))
     g.add_node("uploader", partial(_uploader, youtube=youtube, notifier=notifier))
 
-    g.set_entry_point("idea_generator")
+    g.set_entry_point(entry)
     g.add_edge("idea_generator", "hitl_topic")
     g.add_conditional_edges("hitl_topic", _route_after_topic,
                             {"script_writer": "script_writer", END: END})

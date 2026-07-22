@@ -63,8 +63,8 @@ SCRIPT_WITH_SEGMENTS = json.dumps({"title": "Best One", "hook": "h", "segments":
 
 def test_full_run_completes_and_picks_top_topic(tmp_path, monkeypatch):
     import agents.render as render_mod
-    monkeypatch.setattr(render_mod.os.path, "exists", lambda p: True)
-    monkeypatch.setattr(render_mod.os.path, "getsize", lambda p: 1024)
+    monkeypatch.setattr(render_mod, "_exists", lambda p: True)
+    monkeypatch.setattr(render_mod, "_getsize", lambda p: 1024)
 
     app = build_graph(groq=FakeGroq(IDEAS, SCRIPT), trends=SeedTrendsProvider(),
                       notifier=AutoApproveNotifier(), fal=FakeFal(), tts=FakeTTS(),
@@ -92,8 +92,8 @@ def test_reject_topic_fails_fast():
 
 def test_full_run_produces_rendered_video(monkeypatch, tmp_path):
     import agents.render as render_mod
-    monkeypatch.setattr(render_mod.os.path, "exists", lambda p: True)
-    monkeypatch.setattr(render_mod.os.path, "getsize", lambda p: 1024)
+    monkeypatch.setattr(render_mod, "_exists", lambda p: True)
+    monkeypatch.setattr(render_mod, "_getsize", lambda p: 1024)
 
     app = build_graph(groq=FakeGroq(IDEAS, SCRIPT_WITH_SEGMENTS), trends=SeedTrendsProvider(),
                       notifier=AutoApproveNotifier(), fal=FakeFal(), tts=FakeTTS(),
@@ -107,8 +107,8 @@ def test_full_run_produces_rendered_video(monkeypatch, tmp_path):
 
 def test_full_run_publishes_when_youtube_configured(monkeypatch, tmp_path):
     import agents.render as render_mod
-    monkeypatch.setattr(render_mod.os.path, "exists", lambda p: True)
-    monkeypatch.setattr(render_mod.os.path, "getsize", lambda p: 1024)
+    monkeypatch.setattr(render_mod, "_exists", lambda p: True)
+    monkeypatch.setattr(render_mod, "_getsize", lambda p: 1024)
 
     app = build_graph(groq=FakeGroq(IDEAS, SCRIPT_WITH_SEGMENTS), trends=SeedTrendsProvider(),
                       notifier=AutoApproveNotifier(), fal=FakeFal(), tts=FakeTTS(),

@@ -73,8 +73,8 @@ def test_run_job_wires_real_graph(monkeypatch):
     monkeypatch.setattr(runner, "HyperFramesCLI", FakeCLI)
     monkeypatch.setattr(runner, "YouTubeClient", FakeYouTube)
     import agents.render as render_mod
-    monkeypatch.setattr(render_mod.os.path, "exists", lambda p: True)
-    monkeypatch.setattr(render_mod.os.path, "getsize", lambda p: 1024)
+    monkeypatch.setattr(render_mod, "_exists", lambda p: True)
+    monkeypatch.setattr(render_mod, "_getsize", lambda p: 1024)
 
     saved = {}
     monkeypatch.setattr(runner, "save_job",

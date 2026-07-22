@@ -5,6 +5,16 @@ This is what the reference thriller accounts actually do — `shadow_files0`, `r
 `nighttales169` all transcribe to a song with no narration at all
 (see `docs/superpowers/specs/2026-07-21-audio-analysis.md`).
 
+## Default is SILENT — you probably don't need this folder
+
+`BGM_MODE=silent` is the default. Music-mode videos render **with no audio track**, and you add
+the song inside the Instagram / YouTube app when posting. That's deliberate: trending audio is a
+real ranking signal and it **cannot be attached through the API** — only in the app. So the
+pipeline hands you a silent video and you pick the trending sound yourself.
+
+Set `BGM_MODE=baked` in `.env` only if you want music mixed in automatically (fully hands-off
+posting, but no trending-audio boost). Everything below applies to that mode.
+
 ## How to fill this
 
 Drop audio files (`.mp3`, `.wav`, `.m4a`, `.aac`, `.ogg`) into the mood folder that fits:
