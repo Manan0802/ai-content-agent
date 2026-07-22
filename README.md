@@ -43,6 +43,33 @@ python -m orchestrator.runner
 
 Generates topic ideas for the default niche, writes a script, generates voice + visuals, renders a video, and (if YouTube is configured) uploads it — asking you to approve at each gate (topic, script, render, publish) in the console. Produces `outputs/<job_id>/render/final.mp4`.
 
+## Series mode (Phase 4)
+
+Turn one story into a multi-part serial — the format the reference accounts grow on (later parts
+outperform Part 1 because the audience gets invested):
+
+```bash
+python -m orchestrator.series_runner "एक डिलीवरी वाला रात को सुनसान फ्लैट पर पहुँचता है" 3
+```
+
+Every part shares one locked art style and the same characters, ends on a cliffhanger written
+into the dialogue, and carries a "Part N" badge. Output lands in `outputs/<series_id>/part_<n>/`.
+
+**Format profiles** (`modules/formats.py`, durations measured from real reels):
+
+| Profile | Length | Audio | Use for |
+|---|---|---|---|
+| `joke_10s` | ~11s | 2 voices | one setup, one punchline |
+| `montage_35s` | ~34s | music | nostalgia, emotional |
+| `drama_50s` | ~50s | 3-5 voices | characters arguing, explainer |
+| `serial_75s` | ~75s | music | thriller / crime / story serial |
+
+Music-mode formats render **silent by default** (`BGM_MODE=silent`) so you can add trending audio
+in the Instagram / YouTube app — trending sounds can't be attached through the API. Set
+`BGM_MODE=baked` to mix in a track from `assets/music/` instead.
+
+Languages: `hindi`, `hinglish`, `haryanvi`, `punjabi` — written in dialect, not transliterated.
+
 ## Publishing to YouTube (Phase 3)
 
 Uploads the rendered video as **unlisted** (review it on YouTube, then make it public yourself). One-time setup:
@@ -84,5 +111,6 @@ LangGraph · langchain-groq · fal-client · HyperFrames (Kokoro TTS + HTML→vi
 - **Phase 1** ✅ Text spine (orchestrator, state, idea + script agents, HITL CLI)
 - **Phase 2** ✅ Voice (Kokoro) + visuals (fal FLUX.2 hero + FLUX.1 schnell B-roll) + HyperFrames render + AI-content disclosure
 - **Phase 3** ✅ YouTube unlisted upload (HITL-gated, #Shorts, OAuth) — Instagram + analytics deferred
-- **Phase 4** Scheduler, retry/recovery, first real videos
-- **Phase 5** VoxCPM2 / Sarvam cloud voice, Postiz multi-platform, WhatsApp notifier (green-api), analytics feedback loop
+- **Phase 4** ✅ Series & format engine — multi-part serials, 4 format profiles, multi-voice dialogue, music mode, Hindi/Haryanvi/Punjabi, engagement captions
+- **Phase 5** Scheduler, retry/recovery, first real videos
+- **Phase 6** VoxCPM2 / Sarvam cloud voice, Postiz multi-platform, WhatsApp notifier (green-api), analytics feedback loop
