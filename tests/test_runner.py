@@ -86,3 +86,41 @@ def test_run_job_wires_real_graph(monkeypatch):
     assert out["render_output_path"]
     assert out["youtube_url"] == "https://youtu.be/vid123"
     assert saved["state"]["job_id"] == out["job_id"]  # runner persisted the job
+
+
+def test_run_job_accepts_format_and_language(monkeypatch):
+    monkeypatch.setattr(runner, "GroqClient", FakeGroq)
+    monkeypatch.setattr(runner, "FalClient", FakeFal)
+    monkeypatch.setattr(runner, "PollinationsClient", FakeFal)
+    monkeypatch.setattr(runner, "HyperFramesTTS", FakeTTS)
+    monkeypatch.setattr(runner, "HyperFramesCLI", FakeCLI)
+    monkeypatch.setattr(runner, "YouTubeClient", FakeYouTube)
+    monkeypatch.setattr(runner, "save_job", lambda state, outputs_dir: None)
+    import agents.render as render_mod
+    monkeypatch.setattr(render_mod, "_exists", lambda p: True)
+    monkeypatch.setattr(render_mod, "_getsize", lambda p: 1024)
+
+    out = runner.run_job(niche="horror", auto=True,
+                         format_profile="serial_75s", language="haryanvi")
+    assert out["format_profile"] == "serial_75s"
+    assert out["language"] == "haryanvi"
+    # serial_75s is a music format -> no TTS audio, dialogue is burned on screen
+    assert out["audio_assets"] == []
+
+
+def test_run_job_defaults_are_unchanged(monkeypatch):
+    monkeypatch.setattr(runner, "GroqClient", FakeGroq)
+    monkeypatch.setattr(runner, "FalClient", FakeFal)
+    monkeypatch.setattr(runner, "PollinationsClient", FakeFal)
+    monkeypatch.setattr(runner, "HyperFramesTTS", FakeTTS)
+    monkeypatch.setattr(runner, "HyperFramesCLI", FakeCLI)
+    monkeypatch.setattr(runner, "YouTubeClient", FakeYouTube)
+    monkeypatch.setattr(runner, "save_job", lambda state, outputs_dir: None)
+    import agents.render as render_mod
+    monkeypatch.setattr(render_mod, "_exists", lambda p: True)
+    monkeypatch.setattr(render_mod, "_getsize", lambda p: 1024)
+
+    from config import SETTINGS
+    out = runner.run_job(niche="tech", auto=True)
+    assert out["language"] == SETTINGS.default_language
+    assert out["format_profile"] == SETTINGS.default_format

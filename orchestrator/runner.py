@@ -18,11 +18,15 @@ def _image_client():
     return FalClient()
 
 
-def run_job(niche=None, mode=None, fmt="short", auto=False):
+def run_job(niche=None, mode=None, fmt="short", auto=False,
+            format_profile=None, language=None):
     niche = niche or SETTINGS.default_niche
     mode = mode or SETTINGS.default_mode
-    state = new_state(niche, mode, SETTINGS.default_language, fmt,
-                      ["topic", "script", "render", "publish"])
+    language = language or SETTINGS.default_language
+    format_profile = format_profile or SETTINGS.default_format
+    state = new_state(niche, mode, language, fmt,
+                      ["topic", "script", "render", "publish"],
+                      format_profile=format_profile)
     project_dir = f"{SETTINGS.outputs_dir}/{state['job_id']}"
 
     groq = GroqClient()
