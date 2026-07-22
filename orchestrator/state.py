@@ -29,6 +29,8 @@ class ContentState(TypedDict, total=False):
     bgm_path: str
     series_id: str
     part_number: int
+    series: dict
+    series_parts: int
 
 
 def new_state(niche: str, mode: str, language: str, format: str,
@@ -59,4 +61,6 @@ def new_state(niche: str, mode: str, language: str, format: str,
         bgm_path="",
         series_id="",
         part_number=0,
+        series={},
+        series_parts=0,
     )
