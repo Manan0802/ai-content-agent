@@ -1,16 +1,21 @@
 from orchestrator.state import ContentState
 from config import SETTINGS
+from modules.caption import build_caption
 
 
 def _build_metadata(state: ContentState):
     script = state.get("script", {})
-    title = (script.get("title") or state.get("topic") or "Untitled")[:100]
-    hook = script.get("hook", "")
-    hashtags = script.get("hashtags", [])
-    # #Shorts in the description is what marks the upload as a YouTube Short.
-    tag_line = " ".join(hashtags + ["#Shorts"])
-    description = f"{hook}\n\n{SETTINGS.ai_disclosure_text}\n\n{tag_line}".strip()
-    tags = [t.lstrip("#") for t in hashtags]
+    title = (script.get("title") or state.get("topic") or "Untitled").strip()
+    part = state.get("part_number", 0)
+    total = len(state.get("series", {}).get("parts", []) or [])
+    if part:
+        title = f"{title} | Part {part}"
+    title = title[:100]
+
+    # engagement CTAs + #Shorts, per the measured caption research (modules/caption.py)
+    caption = build_caption(script, part_number=part, total_parts=total)
+    description = f"{caption}\n\n{SETTINGS.ai_disclosure_text}"
+    tags = [t.lstrip("#") for t in (script.get("hashtags", []) or [])]
     return title, description, tags
 
 
