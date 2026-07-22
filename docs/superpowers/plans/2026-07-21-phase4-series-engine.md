@@ -1,5 +1,17 @@
 # Phase 4 — Series & Format Engine
 
+> **Status 2026-07-22: Tasks 1-9 complete and pushed (120 tests green). Task 10 (live 3-part
+> series) running.** Two decisions changed during the build, both driven by evidence:
+> 1. **`BGM_MODE=silent` is now the default** for music formats. Manan pointed out he'll add the
+>    song in the Instagram/YouTube app at post time — and trending audio genuinely cannot be
+>    attached via API, so a baked track forfeits that reach. `baked` remains available.
+> 2. **Series cliffhanger chaining uses the *script's* cliffhanger, not the outline's** — the
+>    next part pays off what the viewer actually heard, not what the plan intended.
+>
+> Real bug found and fixed on the way: tests were monkeypatching `os.path.exists` globally, which
+> silently broke `os.makedirs` (it uses it internally) so part directories were never created.
+> `render_node` now exposes a module-level `_exists`/`_getsize` seam instead.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:executing-plans. Task-by-task, TDD,
 > commit + push after every green step.
 
