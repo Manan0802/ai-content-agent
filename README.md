@@ -2,17 +2,20 @@
 
 Autonomous multi-agent system that turns a niche into a full video script (and, in later phases, voice + visuals + a finished video uploaded to YouTube/Instagram). Hinglish-first, multi-domain, free-first stack, no GPU required.
 
-> **Status:** Phase 2 (media pipeline) complete — `niche → topic ideas → script → voice + visuals → HyperFrames render → playable MP4`, all human-gated. Upload lands in Phase 3.
+> **Status:** Phases 1–4 complete — from a topic (or a whole multi-part story) to rendered, captioned, uploadable vertical videos. All human-gated.
 
 ## Architecture (target)
 
 ```
-LangGraph orchestrator
-  idea_generator → [HITL topic] → script_writer → [HITL script]
-    → voice (Kokoro) + visuals (fal two-tier) → HyperFrames render → upload
+single video:  idea_generator → [HITL topic] → script_writer → [HITL script]
+                 → visuals → voice/music → composition → render → [HITL] → upload
+
+series:        series_writer (one story → N parts, locked style + characters)
+                 → per part: the pipeline above, chained by cliffhangers
 ```
 
-Phases 1–2 ship the brain and the body: orchestrator, state, agents, a pluggable human-approval layer, two-tier AI visuals, Kokoro voiceover, and an HTML→MP4 render. Upload lands in Phase 3.
+Built on LangGraph. Every external call (Groq, image gen, HyperFrames CLI, YouTube) sits behind a
+mockable wrapper, so the whole test suite runs with no network and no subprocess.
 
 Full design: `docs/superpowers/specs/2026-06-28-ai-content-agent-design.md`
 Build plans: `docs/superpowers/plans/`
