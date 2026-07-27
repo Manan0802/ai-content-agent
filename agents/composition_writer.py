@@ -39,7 +39,7 @@ _HEAD = """<!doctype html>
   </head>
   <body>
     <div id="root" data-composition-id="{comp_id}" data-start="0" data-width="{width}" data-height="{height}" data-duration="{duration}">
-      <div id="ai-label" class="clip ai-label" data-start="0" data-duration="{duration}" data-track-index="20">AI-Generated</div>
+      <div id="ai-label" class="clip ai-label" data-start="{label_start}" data-duration="{label_duration}" data-track-index="20">AI-Generated</div>
 """
 
 _TAIL = """    </div>
@@ -78,6 +78,7 @@ def composition_writer_node(state: ContentState, project_dir: str,
                 f'data-duration="{disclosure_duration_sec}" data-track-index="10" src="{rel}"></audio>'
             )
             cursor += disclosure_duration_sec
+        label_start = cursor
 
         # speaker id -> display name, so we can label lines when there is more than one character
         chars = state.get("script", {}).get("characters", []) or []
@@ -160,7 +161,11 @@ def composition_writer_node(state: ContentState, project_dir: str,
         html = (
             _HEAD.format(width=width, height=height,
                          title=state["script"].get("title", "Untitled"),
-                         comp_id=state["job_id"], duration=cursor)
+                         comp_id=state["job_id"], duration=cursor,
+                         # the corner label would sit on top of the full-frame disclosure card,
+                         # which `check` flags as overlapping text — start it after the card
+                         label_start=label_start,
+                         label_duration=round(cursor - label_start, 2))
             + part_html
             + "\n".join(clips) + "\n" + "\n".join(media_tags) + "\n"
             + _TAIL.format(comp_id=state["job_id"], tweens="".join(tweens))

@@ -33,8 +33,10 @@ def test_composition_writer_produces_valid_contract_html(tmp_path):
     assert html.count('class="clip"') == 3         # disclosure intro + 2 segments
     assert html.count("<audio") == 3                # disclosure + 2 segments
     assert 'id="ai-label"' in html                  # persistent visible label
-    # the persistent label spans the whole video, not just one scene
-    assert 'id="ai-label" class="clip ai-label" data-start="0" data-duration="15.0"' in html
+    # The label covers every scene, but starts after the disclosure card — during the card it
+    # would sit on top of the full-frame disclosure text, which `hyperframes check` rejects as
+    # overlapping text (and the card already says the same thing).
+    assert 'id="ai-label" class="clip ai-label" data-start="3.0" data-duration="12.0"' in html
     # scene 1 must start AFTER the disclosure intro, not at 0
     assert 'data-start="3.0" data-duration="5.0"' in html
     # audio must not be nested inside a clip section
