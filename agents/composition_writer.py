@@ -20,10 +20,15 @@ _HEAD = """<!doctype html>
                    color: #fff; background: rgba(0,0,0,.55); padding: 6px 14px; border-radius: 8px;
                    z-index: 9999; }}
       /* on-screen dialogue: big Devanagari at the TOP of frame, matching the reference accounts */
-      .dialogue {{ position: absolute; top: 8%; left: 5%; right: 5%; font-size: 62px;
-                   font-weight: 800; line-height: 1.25; text-align: center; color: #fff;
-                   -webkit-text-stroke: 3px #000; text-shadow: 0 4px 16px rgba(0,0,0,.9);
-                   z-index: 50; }}
+      .dialogue {{ position: absolute; top: 7%; left: 4%; right: 4%; font-size: 70px;
+                   font-weight: 900; line-height: 1.2; text-align: center; color: #fff;
+                   -webkit-text-stroke: 4px #000; paint-order: stroke fill;
+                   text-shadow: 0 6px 22px rgba(0,0,0,.95), 0 0 40px rgba(0,0,0,.7);
+                   letter-spacing: -0.5px; z-index: 50; }}
+      /* dark scrim behind the text so it stays readable on any image */
+      .scrim {{ position: absolute; top: 0; left: 0; right: 0; height: 34%;
+                background: linear-gradient(180deg, rgba(0,0,0,.75) 0%, rgba(0,0,0,0) 100%);
+                z-index: 40; }}
       .speaker {{ display: block; font-size: 30px; font-weight: 700; color: #ffd54a;
                   -webkit-text-stroke: 2px #000; margin-bottom: 10px; }}
       .part-badge {{ inset: auto; top: 3%; left: 4%; bottom: auto; right: auto; font-size: 30px;
@@ -93,6 +98,7 @@ def composition_writer_node(state: ContentState, project_dir: str,
                 f'      <section id="{scene_id}" class="clip" data-start="{cursor}" data-duration="{dur}" '
                 f'data-track-index="1">\n'
                 f'        <img src="{image}" crossorigin="anonymous" />\n'
+                f'        <div class="scrim"></div>\n'
                 f'        <p class="dialogue">{speaker_html}{text}</p>\n'
                 f'      </section>'
             )
@@ -105,7 +111,23 @@ def composition_writer_node(state: ContentState, project_dir: str,
             )
             tweens.append(
                 f'      tl.fromTo("#{scene_id} .dialogue", {{ opacity: 0, y: 30 }}, '
-                f'{{ opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }}, {cursor});\n'
+                f'{{ opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }}, {cursor});\n'
+            )
+            # crossfade in/out so scenes flow instead of hard-cutting
+            if seg is not segments[0]:
+                tweens.append(
+                    f'      tl.fromTo("#{scene_id}", {{ opacity: 0 }}, '
+                    f'{{ opacity: 1, duration: 0.35, ease: "power1.inOut" }}, {cursor});\n'
+                )
+            tweens.append(
+                f'      tl.to("#{scene_id} .dialogue", '
+                f'{{ opacity: 0, duration: 0.25 }}, {round(cursor + dur - 0.25, 2)});\n'
+            )
+            # hard kill on the clip boundary — a seek that lands past the fade would otherwise
+            # leave the previous scene's text visible (`gsap_exit_missing_hard_kill`)
+            tweens.append(
+                f'      tl.set("#{scene_id} .dialogue", '
+                f'{{ opacity: 0 }}, {round(cursor + dur, 2)});\n'
             )
 
             audio_path = audio_assets.get(seg["scene_number"], {}).get("audio_path", "")

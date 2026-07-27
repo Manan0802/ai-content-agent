@@ -1,4 +1,5 @@
 import os
+import subprocess
 from orchestrator.state import ContentState
 from integrations.hyperframes_tts import HyperFramesTTS
 from modules.formats import get_format
@@ -16,6 +17,16 @@ def _audio_mode(state: ContentState) -> str:
         return "narrated"
 
 
+def _probe_duration(path: str) -> float:
+    """Real length of an audio file, in seconds."""
+    out = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+         "-of", "default=noprint_wrappers=1:nokey=1", path],
+        capture_output=True, text=True, check=True,
+    ).stdout.strip()
+    return float(out)
+
+
 def _line_of(seg: dict) -> str:
     # v2 scripts use `dialogue` + `speaker`; Phase-1 scripts used `voiceover_text`
     return seg.get("dialogue") or seg.get("voiceover_text") or ""
@@ -23,7 +34,8 @@ def _line_of(seg: dict) -> str:
 
 def voiceover_node(state: ContentState, tts: HyperFramesTTS, output_dir: str,
                    disclosure_text: str = "", music_dir: str = "",
-                   bgm_mode: str = "baked") -> ContentState:
+                   bgm_mode: str = "baked", probe=_probe_duration,
+                   tail_sec: float = 0.25) -> ContentState:
     try:
         # Music-mode formats (thriller/nostalgia) have NO voiceover at all — a BGM track plays
         # and the dialogue is burned on screen. Matches shadow_files0 / realistic_crime.
@@ -52,7 +64,20 @@ def voiceover_node(state: ContentState, tts: HyperFramesTTS, output_dir: str,
         for seg in state["script"]["segments"]:
             path = os.path.join(output_dir, f"scene_{seg['scene_number']}.wav")
             tts.synthesize(_line_of(seg), path, voice=voice_map.get(seg.get("speaker")))
-            assets.append({"scene_number": seg["scene_number"], "audio_path": path})
+
+            # The script's duration_sec is the LLM guessing how long its own line takes.
+            # It is always wrong, which is what makes the image cut mid-sentence or sit in
+            # dead air. Re-time the scene from the ACTUAL speech instead.
+            entry = {"scene_number": seg["scene_number"], "audio_path": path}
+            try:
+                real = probe(path)
+                entry["duration_sec"] = real
+                seg["duration_sec"] = round(real + tail_sec, 2)   # + a short breath
+            except Exception as e:  # noqa: BLE001 - keep the script's guess if we can't measure
+                state.setdefault("errors", []).append(
+                    f"voiceover: could not measure duration for scene {seg['scene_number']}: {e}"
+                )
+            assets.append(entry)
         state["audio_assets"] = assets
 
         if disclosure_text:
