@@ -32,6 +32,7 @@ class Settings:
     gemini_api_key: str | None = os.getenv("GEMINI_API_KEY")
     character_ref_image_url: str = os.getenv("CHARACTER_REF_IMAGE_URL", "")
     kokoro_voice: str = "af_heart"
+    tts_provider: str = os.getenv("TTS_PROVIDER", "kokoro")  # kokoro (free/local) | gemini (native Hindi)
     video_width: int = 1080
     video_height: int = 1920
     outputs_dir: str = "outputs"

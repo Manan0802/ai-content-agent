@@ -16,12 +16,20 @@ from integrations.fal_client import FalClient
 from integrations.pollinations_client import PollinationsClient
 from integrations.gemini_client import GeminiImageClient
 from integrations.hyperframes_tts import HyperFramesTTS
+from integrations.gemini_tts import GeminiTTS
 from integrations.hyperframes_cli import HyperFramesCLI
 from integrations.youtube_client import YouTubeClient
 from agents.idea_generator import SeedTrendsProvider
 from agents.series_writer import series_writer_node
 from modules.notifier import CLINotifier, AutoApproveNotifier
 from modules.job_store import save_job
+
+
+def _tts_client():
+    """kokoro = free + local but English-trained; gemini = native Hindi on the free tier."""
+    if SETTINGS.tts_provider == "gemini":
+        return GeminiTTS(voice=SETTINGS.kokoro_voice)
+    return HyperFramesTTS(voice=SETTINGS.kokoro_voice)
 
 
 def _image_client():
@@ -82,7 +90,7 @@ def run_series(topic: str, niche: str | None = None, format_profile: str | None 
 
     # 2. render each part through the normal per-video pipeline
     fal = _image_client()
-    tts = HyperFramesTTS(voice=SETTINGS.kokoro_voice)
+    tts = _tts_client()
     hf_cli = HyperFramesCLI()
     youtube = YouTubeClient()
 
