@@ -87,3 +87,30 @@ def test_hyperframes_contract_still_holds(tmp_path):
     assert 'id="root"' in html and 'data-start="0"' in html
     assert 'id="ai-label" class="clip ai-label"' in html
     assert 'id="part-badge" class="clip' in html
+
+
+def test_timeline_actually_animates_so_seek_advances(tmp_path):
+    """HyperFrames `check` fails with `sweep_static` if the GSAP timeline never advances.
+
+    An empty `gsap.timeline({paused:true})` has zero duration, so seeking does nothing and the
+    whole verification run is marked unreliable. Real tweens also make the video look like motion
+    instead of a slideshow.
+    """
+    s = _base("serial_75s", tmp_path, with_audio=False)
+    composition_writer_node(s, project_dir=str(tmp_path))
+    html = (tmp_path / "index.html").read_text()
+
+    assert "gsap.timeline" in html
+    assert ".to(" in html or ".from(" in html or ".fromTo(" in html   # real tweens exist
+    # dialogue should animate in, images should drift (Ken Burns)
+    assert "#scene-1" in html
+    assert "opacity" in html
+    assert "scale" in html
+
+
+def test_every_scene_gets_a_tween(tmp_path):
+    s = _base("drama_50s", tmp_path)
+    composition_writer_node(s, project_dir=str(tmp_path))
+    html = (tmp_path / "index.html").read_text()
+    for n in (1, 2):
+        assert f'"#scene-{n} .dialogue"' in html or f"#scene-{n} .dialogue" in html

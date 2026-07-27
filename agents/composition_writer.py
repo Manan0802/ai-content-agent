@@ -40,7 +40,8 @@ _HEAD = """<!doctype html>
 _TAIL = """    </div>
     <script>
       window.__timelines = window.__timelines || {{}};
-      window.__timelines["{comp_id}"] = gsap.timeline({{ paused: true }});
+      const tl = gsap.timeline({{ paused: true }});
+{tweens}      window.__timelines["{comp_id}"] = tl;
     </script>
   </body>
 </html>
@@ -57,7 +58,7 @@ def composition_writer_node(state: ContentState, project_dir: str,
         audio_assets = {a["scene_number"]: a for a in state.get("audio_assets", [])}
         disclosure_audio = state.get("disclosure_audio_path", "")
 
-        clips, media_tags, cursor = [], [], 0.0
+        clips, media_tags, tweens, cursor = [], [], [], 0.0
 
         if disclosure_audio:
             rel = os.path.relpath(disclosure_audio, project_dir)
@@ -95,6 +96,18 @@ def composition_writer_node(state: ContentState, project_dir: str,
                 f'        <p class="dialogue">{speaker_html}{text}</p>\n'
                 f'      </section>'
             )
+            # motion: slow push-in on the image + dialogue fading up.
+            # Also required for correctness — an empty timeline never advances under seek and
+            # `hyperframes check` fails the whole run with `sweep_static`.
+            tweens.append(
+                f'      tl.fromTo("#{scene_id} img", {{ scale: 1.0 }}, '
+                f'{{ scale: 1.08, duration: {dur}, ease: "none" }}, {cursor});\n'
+            )
+            tweens.append(
+                f'      tl.fromTo("#{scene_id} .dialogue", {{ opacity: 0, y: 30 }}, '
+                f'{{ opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }}, {cursor});\n'
+            )
+
             audio_path = audio_assets.get(seg["scene_number"], {}).get("audio_path", "")
             if audio_path:
                 rel = os.path.relpath(audio_path, project_dir)
@@ -128,7 +141,7 @@ def composition_writer_node(state: ContentState, project_dir: str,
                          comp_id=state["job_id"], duration=cursor)
             + part_html
             + "\n".join(clips) + "\n" + "\n".join(media_tags) + "\n"
-            + _TAIL.format(comp_id=state["job_id"])
+            + _TAIL.format(comp_id=state["job_id"], tweens="".join(tweens))
         )
 
         os.makedirs(project_dir, exist_ok=True)
