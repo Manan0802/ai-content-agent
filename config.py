@@ -28,7 +28,8 @@ class Settings:
         default_factory=lambda: ["hindi", "hinglish", "haryanvi", "punjabi"]
     )
     fal_api_key: str | None = os.getenv("FAL_KEY")
-    image_provider: str = os.getenv("IMAGE_PROVIDER", "fal")  # fal | pollinations
+    image_provider: str = os.getenv("IMAGE_PROVIDER", "fal")  # fal | pollinations | gemini
+    gemini_api_key: str | None = os.getenv("GEMINI_API_KEY")
     character_ref_image_url: str = os.getenv("CHARACTER_REF_IMAGE_URL", "")
     kokoro_voice: str = "af_heart"
     video_width: int = 1080

@@ -14,6 +14,7 @@ from orchestrator.graph import build_graph
 from integrations.groq_client import GroqClient
 from integrations.fal_client import FalClient
 from integrations.pollinations_client import PollinationsClient
+from integrations.gemini_client import GeminiImageClient
 from integrations.hyperframes_tts import HyperFramesTTS
 from integrations.hyperframes_cli import HyperFramesCLI
 from integrations.youtube_client import YouTubeClient
@@ -24,6 +25,9 @@ from modules.job_store import save_job
 
 
 def _image_client():
+    """Pick the image backend. gemini = free tier + reference-image character lock."""
+    if SETTINGS.image_provider == "gemini":
+        return GeminiImageClient(pace_sec=4.0)   # free tier is rate-limited per minute
     if SETTINGS.image_provider == "pollinations":
         return PollinationsClient(width=SETTINGS.video_width, height=SETTINGS.video_height)
     return FalClient()
