@@ -42,7 +42,14 @@ class YouTubeClient:
                      tags: list[str], privacy: str = "unlisted") -> str:
         body = {
             "snippet": {"title": title, "description": description, "tags": tags},
-            "status": {"privacyStatus": privacy, "selfDeclaredMadeForKids": False},
+            "status": {
+                "privacyStatus": privacy,
+                "selfDeclaredMadeForKids": False,
+                # YouTube's official altered/synthetic-content declaration. YouTube runs its own
+                # AI detection and penalises undeclared AI content, so declare it at upload —
+                # the in-frame label alone doesn't tell the platform anything.
+                "containsSyntheticMedia": True,
+            },
         }
         response = self._insert(body, file_path)
         return response["id"]

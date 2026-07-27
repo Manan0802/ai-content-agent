@@ -7,6 +7,7 @@ from integrations.pollinations_client import PollinationsClient
 from integrations.gemini_client import GeminiImageClient
 from integrations.hyperframes_tts import HyperFramesTTS
 from integrations.gemini_tts import GeminiTTS
+from integrations.edge_tts_client import EdgeTTS
 from integrations.hyperframes_cli import HyperFramesCLI
 from integrations.youtube_client import YouTubeClient
 from agents.idea_generator import SeedTrendsProvider
@@ -16,6 +17,8 @@ from modules.job_store import save_job
 
 def _tts_client():
     """kokoro = free + local but English-trained; gemini = native Hindi on the free tier."""
+    if SETTINGS.tts_provider == "edge":
+        return EdgeTTS(voice=SETTINGS.kokoro_voice)
     if SETTINGS.tts_provider == "gemini":
         return GeminiTTS(voice=SETTINGS.kokoro_voice)
     return HyperFramesTTS(voice=SETTINGS.kokoro_voice)
