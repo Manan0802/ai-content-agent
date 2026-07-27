@@ -3,6 +3,7 @@ import time
 import urllib.request
 from orchestrator.state import ContentState
 from integrations.fal_client import FalClient
+from modules.style import style_for_niche
 
 
 def _http_fetch(url: str, dest: str, timeout: int = 180) -> None:
@@ -38,7 +39,10 @@ def visuals_node(state: ContentState, fal: FalClient, character_ref_url: str,
     try:
         # a series locks its art direction + character looks once and reuses them everywhere
         series = state.get("series", {}) or {}
-        style_prompt = style_prompt or series.get("style_prompt", "")
+        # A one-off job has no series style, which left every scene looking like a different
+        # production. Fall back to the niche's locked look so at least one video is coherent.
+        style_prompt = (style_prompt or series.get("style_prompt", "")
+                        or style_for_niche(state.get("niche", "")))
         appearances = {
             c.get("id"): c.get("appearance", "")
             for c in series.get("characters", []) or []
