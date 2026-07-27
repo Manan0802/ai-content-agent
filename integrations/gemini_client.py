@@ -20,13 +20,15 @@ import hashlib
 import tempfile
 import urllib.request
 
+from config import SETTINGS
+
 MODEL = "gemini-2.5-flash-image"
 
 
 class GeminiImageClient:
     def __init__(self, api_key: str | None = None, out_dir: str | None = None,
                  model: str = MODEL, pace_sec: float = 0.0):
-        self._api_key = api_key if api_key is not None else os.getenv("GEMINI_API_KEY")
+        self._api_key = api_key if api_key is not None else SETTINGS.gemini_api_key
         self._out_dir = out_dir or os.path.join(tempfile.gettempdir(), "aica_gemini")
         self._model = model
         self._pace_sec = pace_sec  # free tier is rate-limited per minute

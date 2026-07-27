@@ -12,6 +12,8 @@ that got `am_michael` in one part gets the same Gemini voice in every other part
 import os
 import wave
 
+from config import SETTINGS
+
 MODEL = "gemini-3.1-flash-tts-preview"
 SAMPLE_RATE = 24000
 
@@ -32,7 +34,7 @@ _DEFAULT_VOICE = "Kore"
 class GeminiTTS:
     def __init__(self, api_key: str | None = None, model: str = MODEL,
                  voice: str = "af_heart"):
-        self._api_key = api_key if api_key is not None else os.getenv("GEMINI_API_KEY")
+        self._api_key = api_key if api_key is not None else SETTINGS.gemini_api_key
         self._model = model
         self._voice = voice
         self._client = None

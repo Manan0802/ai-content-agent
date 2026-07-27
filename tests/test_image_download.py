@@ -29,7 +29,7 @@ def test_images_are_downloaded_to_short_local_paths(tmp_path):
             f.write(b"\x89PNG" + b"\x00" * 512)
 
     out = visuals_node(_state(), fal=FakeFal(), character_ref_url="",
-                       project_dir=str(tmp_path), fetch=fake_fetch)
+                       project_dir=str(tmp_path), fetch=fake_fetch, pace_sec=0)
 
     for a in out["visual_assets"]:
         # composition references a short RELATIVE path, never the giant encoded URL
@@ -45,7 +45,7 @@ def test_remote_url_is_kept_when_download_fails(tmp_path):
         raise RuntimeError("429 rate limited")
 
     out = visuals_node(_state(), fal=FakeFal(), character_ref_url="",
-                       project_dir=str(tmp_path), fetch=failing_fetch)
+                       project_dir=str(tmp_path), fetch=failing_fetch, pace_sec=0)
     # falls back to the remote URL rather than losing the scene entirely
     assert out["visual_assets"][0]["image_url"].startswith("http")
     assert any("image download" in e for e in out["errors"])

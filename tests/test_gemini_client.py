@@ -49,7 +49,8 @@ def test_hero_passes_reference_image_for_character_lock(tmp_path, monkeypatch):
 
 def test_is_configured_reflects_key():
     assert GeminiImageClient(api_key="k").is_configured() is True
-    assert GeminiImageClient(api_key=None).is_configured() is False
+    # None = "fall back to .env"; "" = explicitly no key
+    assert GeminiImageClient(api_key="").is_configured() is False
 
 
 def test_each_call_writes_a_distinct_file(tmp_path, monkeypatch):

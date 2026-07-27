@@ -48,4 +48,5 @@ def test_empty_audio_raises_instead_of_writing_silence(tmp_path, monkeypatch):
 
 def test_is_configured():
     assert GeminiTTS(api_key="k").is_configured() is True
-    assert GeminiTTS(api_key=None).is_configured() is False
+    # None = "fall back to .env"; "" = explicitly no key
+    assert GeminiTTS(api_key="").is_configured() is False
