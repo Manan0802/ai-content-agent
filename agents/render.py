@@ -9,9 +9,13 @@ _getsize = os.path.getsize
 
 def render_node(state: ContentState, cli, notifier, project_dir: str) -> ContentState:
     try:
-        cli.lint(project_dir)
-        cli.validate(project_dir)
-        cli.inspect(project_dir)
+        # `check` = lint + runtime + layout + motion + contrast in one pass
+        if hasattr(cli, "check"):
+            cli.check(project_dir)
+        else:  # older wrapper/test double
+            cli.lint(project_dir)
+            cli.validate(project_dir)
+            cli.inspect(project_dir)
     except Exception as e:  # noqa: BLE001
         state.setdefault("errors", []).append(f"render_precheck: {e}")
         state["status"] = "failed"

@@ -53,8 +53,9 @@ def _route_after_script_hitl(state):
     return "visuals" if state["status"] != "failed" else END
 
 
-def _visuals(state, fal):
-    return visuals_node(state, fal=fal, character_ref_url=SETTINGS.character_ref_image_url)
+def _visuals(state, fal, project_dir):
+    return visuals_node(state, fal=fal, character_ref_url=SETTINGS.character_ref_image_url,
+                        project_dir=project_dir)
 
 
 def _voiceover(state, tts, project_dir):
@@ -87,7 +88,7 @@ def build_graph(groq, trends, notifier, fal=None, tts=None, hf_cli=None, youtube
     g.add_node("hitl_topic", partial(_hitl_topic, notifier=notifier))
     g.add_node("script_writer", partial(_script, groq=groq))
     g.add_node("hitl_script", partial(_hitl_script, notifier=notifier))
-    g.add_node("visuals", partial(_visuals, fal=fal))
+    g.add_node("visuals", partial(_visuals, fal=fal, project_dir=project_dir))
     g.add_node("voiceover", partial(_voiceover, tts=tts, project_dir=project_dir))
     g.add_node("composition_writer", partial(_composition, project_dir=project_dir))
     g.add_node("render", partial(_render, hf_cli=hf_cli, notifier=notifier, project_dir=project_dir))

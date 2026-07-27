@@ -16,14 +16,26 @@ def test_lint_raises_on_failure():
         cli.lint("some/project")
 
 
-def test_lint_builds_expected_command():
+def test_check_builds_expected_command():
     captured = {}
     def fake_run(cmd, capture_output, text):
         captured["cmd"] = cmd
         return FakeResult(0)
     cli = HyperFramesCLI(runner=fake_run)
-    cli.lint("proj")
-    assert captured["cmd"] == ["npx", "hyperframes", "lint", "proj", "--json"]
+    cli.check("proj")
+    # `check` runs lint + runtime + layout + motion + contrast in one session;
+    # `validate` is deprecated in the CLI as of 0.7.76
+    assert captured["cmd"] == ["npx", "hyperframes", "check", "proj", "--json"]
+
+
+def test_legacy_lint_validate_inspect_route_through_check():
+    calls = []
+    def fake_run(cmd, capture_output, text):
+        calls.append(cmd[2])
+        return FakeResult(0)
+    cli = HyperFramesCLI(runner=fake_run)
+    cli.lint("p"); cli.validate("p"); cli.inspect("p")
+    assert calls == ["check", "check", "check"]
 
 
 def test_render_builds_expected_command():
