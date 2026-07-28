@@ -33,6 +33,13 @@ _HEAD = """<!doctype html>
       .hl {{ color: #ff3b30; -webkit-text-stroke: 4px #000; }}
       .speaker {{ display: block; font-size: 30px; font-weight: 700; color: #ffd54a;
                   -webkit-text-stroke: 2px #000; margin-bottom: 10px; }}
+      /* end card: the viewer who reached this point is the one most likely to follow */
+      .outro {{ display: flex; align-items: center; justify-content: center;
+                background: #000; z-index: 60; }}
+      .outro-text {{ font-size: 84px; font-weight: 900; text-align: center; color: #fff;
+                     padding: 0 8%; line-height: 1.25; -webkit-text-stroke: 4px #000;
+                     paint-order: stroke fill; }}
+      .outro-text em {{ display: block; font-style: normal; color: #ff3b30; margin-top: 24px; }}
       .part-badge {{ inset: auto; top: 3%; left: 4%; bottom: auto; right: auto; font-size: 30px;
                      font-weight: 800; color: #fff; background: rgba(200,20,20,.85);
                      padding: 8px 18px; border-radius: 8px; z-index: 9999;
@@ -144,6 +151,25 @@ def composition_writer_node(state: ContentState, project_dir: str,
                     f'data-track-index="10" src="{rel}"></audio>'
                 )
             cursor += dur
+
+        # end card — "Part 2 is coming", shown in the video itself and not only in the caption
+        outro = state.get("outro") or {}
+        if outro.get("text"):
+            odur = float(outro.get("duration_sec", 2.5))
+            clips.append(
+                f'      <section id="outro" class="clip outro" data-start="{cursor}" '
+                f'data-duration="{odur}" data-track-index="2">\n'
+                f'        <p class="outro-text">{outro["text"]}</p>\n'
+                f'      </section>'
+            )
+            tweens.append(
+                f'      tl.fromTo("#outro .outro-text", {{ opacity: 0, scale: 0.9 }}, '
+                f'{{ opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.6)" }}, {cursor});\n'
+            )
+            tweens.append(
+                f'      tl.set("#outro .outro-text", {{ opacity: 1 }}, {round(cursor + odur, 2)});\n'
+            )
+            cursor += odur
 
         # music mode: one BGM track under the whole video instead of per-scene voiceover
         bgm = state.get("bgm_path", "")
