@@ -5,6 +5,7 @@ from integrations.hyperframes_tts import HyperFramesTTS
 from modules.formats import get_format
 from modules.voices import assign_voices
 from modules.music import mood_for_niche, pick_track
+from modules.timing import reading_duration
 
 
 def _audio_mode(state: ContentState) -> str:
@@ -43,6 +44,10 @@ def voiceover_node(state: ContentState, tts: HyperFramesTTS, output_dir: str,
             state["audio_assets"] = []
             state["disclosure_audio_path"] = ""
             state["voice_map"] = {}
+            # No speech to measure here, so the card is timed by how long it takes to READ —
+            # otherwise a 3-word and a 14-word line both sit for whatever the LLM guessed.
+            for seg in state.get("script", {}).get("segments", []):
+                seg["duration_sec"] = reading_duration(_line_of(seg))
             if music_dir and bgm_mode == "baked":
                 mood = mood_for_niche(state.get("niche", ""))
                 seed = state.get("series_id") or state.get("job_id", "")

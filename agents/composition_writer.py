@@ -29,6 +29,8 @@ _HEAD = """<!doctype html>
       .scrim {{ position: absolute; top: 0; left: 0; right: 0; height: 34%;
                 background: linear-gradient(180deg, rgba(0,0,0,.75) 0%, rgba(0,0,0,0) 100%);
                 z-index: 40; }}
+      /* one coloured word per card — where the eye should land in the ~2.5s it is up */
+      .hl {{ color: #ff3b30; -webkit-text-stroke: 4px #000; }}
       .speaker {{ display: block; font-size: 30px; font-weight: 700; color: #ffd54a;
                   -webkit-text-stroke: 2px #000; margin-bottom: 10px; }}
       .part-badge {{ inset: auto; top: 3%; left: 4%; bottom: auto; right: auto; font-size: 30px;
@@ -90,6 +92,9 @@ def composition_writer_node(state: ContentState, project_dir: str,
             image = visuals.get(seg["scene_number"], {}).get("image_url", "")
             # v2 scripts carry `dialogue` (+ speaker); Phase-1 ones carried `voiceover_text`
             text = seg.get("dialogue") or seg.get("voiceover_text", "")
+            hl = seg.get("highlight", "")
+            if hl and hl in text:
+                text = text.replace(hl, f'<span class="hl">{hl}</span>', 1)
             speaker_name = names.get(seg.get("speaker"), "") if show_speaker else ""
             scene_id = f"scene-{seg['scene_number']}"
             speaker_html = (

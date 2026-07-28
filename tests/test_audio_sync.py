@@ -63,9 +63,16 @@ def test_unmeasurable_audio_keeps_the_script_duration(tmp_path):
     assert any("duration" in e for e in s.get("errors", []))
 
 
-def test_music_mode_leaves_durations_alone(tmp_path):
+def test_music_mode_never_uses_the_audio_probe(tmp_path):
+    """There is no voiceover in music mode, so there is nothing to measure — those cards are
+    timed by reading speed instead (see tests/test_music_mode_timing.py)."""
     s = new_state("horror", "semi_auto", "hindi", "short", [], format_profile="serial_75s")
     s["script"] = {"characters": [], "segments": [
         {"scene_number": 1, "duration_sec": 6, "dialogue": "text only"}]}
-    out = voiceover_node(s, tts=FakeTTS(None), output_dir=str(tmp_path), probe=lambda p: 99.0)
-    assert out["script"]["segments"][0]["duration_sec"] == 6   # no voice, no re-timing
+
+    def exploding_probe(path):
+        raise AssertionError("music mode must not probe audio")
+
+    out = voiceover_node(s, tts=FakeTTS(None), output_dir=str(tmp_path), probe=exploding_probe)
+    assert out["audio_assets"] == []
+    assert out["script"]["segments"][0]["duration_sec"] != 6   # re-timed from the text
