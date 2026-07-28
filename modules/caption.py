@@ -46,8 +46,12 @@ def build_caption(script: dict, config: CaptionConfig | None = None,
         body.append(f"😱 {hook}")
 
     ctas = []
-    if part_number and total_parts and part_number < total_parts:
-        ctas.append(f"👉 Part {part_number + 1} प्रोफाइल पर है — देखना मत भूलना!")
+    # Point at the part that is ALREADY posted (the previous one). On Part 1 there is nothing
+    # to point at yet, so promise the next one instead of sending people to a dead end.
+    if part_number > 1:
+        ctas.append(f"👉 Part {part_number - 1} प्रोफाइल पर है — पहले वो देखो!")
+    if total_parts and part_number < total_parts:
+        ctas.append("👉 अगला पार्ट कल रात")
     if cfg.follow_cta:
         ctas.append("❤️ Follow करो ताकि अगला पार्ट मिस ना हो")
     if cfg.share_cta:

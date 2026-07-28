@@ -33,7 +33,7 @@ def test_part_cta_only_appears_for_a_series():
     assert "Part" not in solo
 
     part = build_caption(SCRIPT, part_number=1, total_parts=3)
-    assert "Part 2" in part               # points at the NEXT part
+    assert "अगला पार्ट" in part            # a series promises the next part
     assert "Part 4" not in build_caption(SCRIPT, part_number=3, total_parts=3)
 
 
@@ -65,3 +65,18 @@ def test_caption_stays_within_instagram_limit():
     c = build_caption(long_script)
     assert len(c) <= 2200                # Instagram caption cap
     assert "#Shorts" in c                # tags survive truncation
+
+
+def test_part_one_does_not_claim_a_later_part_is_already_posted():
+    """Posting Part 1, Part 2 does not exist yet — 'Part 2 is on the profile' sends the viewer
+    looking for something that isn't there."""
+    c = build_caption({"title": "T"}, part_number=1, total_parts=3)
+    assert "Part 2 प्रोफाइल पर" not in c
+    assert "कल" in c                      # promise the next one instead
+
+
+def test_a_later_part_points_back_at_the_one_that_is_already_up():
+    """On Part 2 the useful pointer is Part 1 — that one really is on the profile, and sending
+    viewers to it is what turns a single view into a session."""
+    c = build_caption({"title": "T"}, part_number=2, total_parts=3)
+    assert "Part 1 प्रोफाइल पर है" in c

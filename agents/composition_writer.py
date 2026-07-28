@@ -34,8 +34,9 @@ _HEAD = """<!doctype html>
       .speaker {{ display: block; font-size: 30px; font-weight: 700; color: #ffd54a;
                   -webkit-text-stroke: 2px #000; margin-bottom: 10px; }}
       /* end card: the viewer who reached this point is the one most likely to follow */
-      .outro {{ display: flex; align-items: center; justify-content: center;
-                background: #000; z-index: 60; }}
+      .outro {{ display: flex; align-items: center; justify-content: center; z-index: 60; }}
+      /* the last frame stays under the end card — cutting to black kills the rewatch loop */
+      .outro img {{ position: absolute; inset: 0; filter: brightness(0.28) saturate(0.7); }}
       .outro-text {{ font-size: 84px; font-weight: 900; text-align: center; color: #fff;
                      padding: 0 8%; line-height: 1.25; -webkit-text-stroke: 4px #000;
                      paint-order: stroke fill; }}
@@ -156,9 +157,14 @@ def composition_writer_node(state: ContentState, project_dir: str,
         outro = state.get("outro") or {}
         if outro.get("text"):
             odur = float(outro.get("duration_sec", 2.5))
+            last_image = (visuals.get(segments[-1]["scene_number"], {}).get("image_url", "")
+                          if segments else "")
+            backdrop = (f'        <img src="{last_image}" crossorigin="anonymous" />\n'
+                        if last_image else "")
             clips.append(
                 f'      <section id="outro" class="clip outro" data-start="{cursor}" '
                 f'data-duration="{odur}" data-track-index="2">\n'
+                f'{backdrop}'
                 f'        <p class="outro-text">{outro["text"]}</p>\n'
                 f'      </section>'
             )
