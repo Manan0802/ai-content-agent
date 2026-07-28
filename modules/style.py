@@ -8,24 +8,24 @@ models expect: English, concrete, camera- and light-first.
 
 _LOOKS = {
     "horror": (
-        "cinematic horror still, deep shadows, cold desaturated teal and amber, "
-        "35mm film grain, shallow depth of field, moonlight and single practical light source"
+        "cinematic horror still, deep shadows with a single hard light source, cold desaturated "
+        "teal and amber grade, 35mm film grain, shallow depth of field"
     ),
     "crime": (
-        "gritty crime thriller still, harsh contrast, sodium streetlight orange against "
-        "night blue, handheld 35mm look, rain-slick surfaces, heavy film grain"
+        "gritty crime thriller still, harsh contrast, cold blue shadows against warm practical "
+        "light, handheld 35mm look, heavy film grain"
     ),
     "thriller": (
         "tense thriller still, high contrast low-key lighting, muted colour palette, "
         "anamorphic 35mm look, shallow depth of field"
     ),
     "facts": (
-        "clean documentary still, natural daylight, rich saturated colour, sharp focus, "
+        "clean documentary still, soft even light, rich saturated colour, sharp focus, "
         "50mm lens, shallow background blur"
     ),
     "nostalgia": (
-        "warm nostalgic still, golden hour light, faded 1990s Indian film stock, "
-        "soft halation, slight vignette"
+        "warm nostalgic still, soft low-angle light, faded 1990s Indian film stock, "
+        "soft halation, slight vignette, 35mm grain"
     ),
 }
 
@@ -33,6 +33,10 @@ _DEFAULT = (
     "cinematic still, dramatic directional lighting, rich contrast, 35mm film look, "
     "shallow depth of field"
 )
+
+# NOTE: a look is pasted into every image prompt in the video, so it must describe only the
+# GRADE, LENS and GRAIN. Naming a place or weather ("streetlight", "rain-slick") forces every
+# indoor scene outdoors — see tests/test_style_lock.py.
 
 
 def style_for_niche(niche: str) -> str:
