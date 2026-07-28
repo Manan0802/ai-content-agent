@@ -9,3 +9,6 @@ outputs/
 .claude
 .mcp.json
 library/
+
+web/public/
+.wrangler/

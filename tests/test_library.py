@@ -53,3 +53,44 @@ def test_publishing_twice_overwrites_rather_than_duplicating(tmp_path):
 
     import os
     assert open(os.path.join(dest, "final.mp4"), "rb").read() == b"v2"
+
+
+def test_publish_records_the_technical_facts_next_to_the_video(tmp_path):
+    """The gallery shows duration/cards/format for a quality check, and the pipeline is the only
+    thing that knows them — so they get written at publish time, not re-derived later."""
+    import json, os
+    src = tmp_path / "final.mp4"
+    src.write_bytes(b"v")
+
+    dest = publish(str(src), niche="crime", series_title="S", part=1, caption="c",
+                   root=str(tmp_path / "lib"),
+                   meta={"duration_sec": 38.6, "cards": 11, "format": "serial_75s"})
+
+    meta = json.load(open(os.path.join(dest, "meta.json")))
+    assert meta["cards"] == 11
+    assert meta["format"] == "serial_75s"
+
+
+def test_publish_without_meta_writes_no_meta_file(tmp_path):
+    import os
+    src = tmp_path / "final.mp4"
+    src.write_bytes(b"v")
+    dest = publish(str(src), niche="c", series_title="S", part=1, root=str(tmp_path / "lib"))
+    assert not os.path.exists(os.path.join(dest, "meta.json"))
+
+
+def test_republishing_a_video_already_in_the_library_is_not_an_error(tmp_path):
+    """Re-publishing to attach meta.json to an existing part is a normal thing to do; it must
+    not blow up because the source and destination are the same file."""
+    import os
+    root = str(tmp_path / "lib")
+    src = tmp_path / "final.mp4"
+    src.write_bytes(b"v")
+    dest = publish(str(src), niche="c", series_title="S", part=1, root=root)
+
+    again = publish(os.path.join(dest, "final.mp4"), niche="c", series_title="S", part=1,
+                    root=root, meta={"cards": 3})
+
+    assert again == dest
+    assert open(os.path.join(dest, "final.mp4"), "rb").read() == b"v"
+    assert os.path.exists(os.path.join(dest, "meta.json"))

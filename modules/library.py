@@ -2,6 +2,7 @@
 
 `outputs/<job_id>/` stays the pipeline's scratch space. This is where a human looks.
 """
+import json
 import os
 import re
 import shutil
@@ -29,12 +30,22 @@ def part_dir(niche: str, series_title: str, part: int, root: str = "library") ->
 
 
 def publish(video_path: str, niche: str, series_title: str, part: int,
-            caption: str = "", root: str = "library") -> str:
-    """Copy a finished render into the library and drop the caption next to it."""
+            caption: str = "", root: str = "library", meta: dict | None = None) -> str:
+    """Copy a finished render into the library, with its caption and technical facts beside it.
+
+    `meta` is written here rather than re-derived later because the pipeline is the only thing
+    that knows the card count, format profile and measured sync gaps.
+    """
     dest = part_dir(niche, series_title, part, root=root)
     os.makedirs(dest, exist_ok=True)
-    shutil.copy2(video_path, os.path.join(dest, "final.mp4"))
+    final = os.path.join(dest, "final.mp4")
+    # re-publishing an already-published part (e.g. to attach meta.json) points at itself
+    if os.path.abspath(video_path) != os.path.abspath(final):
+        shutil.copy2(video_path, final)
     if caption:
         with open(os.path.join(dest, "caption.txt"), "w", encoding="utf-8") as f:
             f.write(caption)
+    if meta:
+        with open(os.path.join(dest, "meta.json"), "w", encoding="utf-8") as f:
+            json.dump(meta, f, ensure_ascii=False, indent=2)
     return dest

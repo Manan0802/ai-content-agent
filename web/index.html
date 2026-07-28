@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>aica — review</title>
+<style>
+  :root{
+    --bg:#0a0b0d; --panel:#131519; --line:#22262d; --ink:#e9edf2; --dim:#8b95a3;
+    --red:#ff3b30; --green:#25c26e; --amber:#ffb020;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+       -webkit-font-smoothing:antialiased;padding-bottom:env(safe-area-inset-bottom)}
+  header{position:sticky;top:0;z-index:20;background:rgba(10,11,13,.92);
+         backdrop-filter:blur(12px);border-bottom:1px solid var(--line);
+         padding:14px 16px calc(14px + env(safe-area-inset-top)) 16px}
+  h1{margin:0;font-size:17px;letter-spacing:.5px;font-weight:700}
+  h1 span{color:var(--red)}
+  .counts{color:var(--dim);font-size:12.5px;margin-top:3px}
+  .wrap{max-width:1100px;margin:0 auto;padding:16px}
+  .niche{margin:26px 0 10px;font-size:12px;letter-spacing:1.6px;text-transform:uppercase;
+         color:var(--dim);font-weight:700}
+  .series{margin:0 0 12px;font-size:19px;font-weight:700}
+  .series small{color:var(--dim);font-weight:500;font-size:13px;margin-left:8px}
+  .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+        display:flex;flex-direction:column}
+  .card.approved{border-color:var(--green)}
+  .card.rejected{border-color:var(--red);opacity:.55}
+  video{width:100%;aspect-ratio:9/16;background:#000;display:block;object-fit:cover}
+  .body{padding:12px 13px 13px;display:flex;flex-direction:column;gap:10px;flex:1}
+  .row{display:flex;align-items:center;gap:8px;justify-content:space-between}
+  .part{font-weight:700;font-size:15px}
+  .badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;letter-spacing:.4px}
+  .badge.approved{background:rgba(37,194,110,.16);color:var(--green)}
+  .badge.rejected{background:rgba(255,59,48,.16);color:var(--red)}
+  .badge.pending{background:rgba(255,176,32,.14);color:var(--amber)}
+  .facts{display:flex;flex-wrap:wrap;gap:5px}
+  .fact{font-size:11px;color:var(--dim);background:#0d0f12;border:1px solid var(--line);
+        padding:3px 8px;border-radius:6px;font-variant-numeric:tabular-nums}
+  details{border-top:1px solid var(--line);padding-top:9px}
+  summary{cursor:pointer;font-size:12.5px;color:var(--dim);list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"▸ ";color:var(--red)}
+  details[open] summary::before{content:"▾ "}
+  pre{white-space:pre-wrap;word-break:break-word;font-size:12.5px;color:var(--ink);
+      background:#0d0f12;border:1px solid var(--line);border-radius:8px;padding:10px;
+      margin:9px 0 0;max-height:190px;overflow:auto;font-family:inherit}
+  .btns{display:flex;gap:7px;margin-top:auto}
+  button{flex:1;border:1px solid var(--line);background:#0d0f12;color:var(--ink);
+         padding:9px 6px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;
+         font-family:inherit}
+  button:active{transform:scale(.97)}
+  button.ok[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:#04140b}
+  button.no[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:#fff}
+  button.copy{flex:0 0 auto;padding:9px 12px}
+  .empty{color:var(--dim);text-align:center;padding:70px 20px}
+  .note{color:var(--dim);font-size:12px;margin-top:6px}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:var(--panel);
+         border:1px solid var(--line);color:var(--ink);padding:10px 18px;border-radius:999px;
+         font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50}
+  .toast.on{opacity:1}
+</style>
+</head>
+<body>
+<header>
+  <h1>aica <span>·</span> review</h1>
+  <div class="counts" id="counts">loading…</div>
+</header>
+
+<div class="wrap" id="root"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (s, r = document) => r.querySelector(s);
+let STATUS = {};
+
+const toast = (msg) => {
+  const t = $("#toast");
+  t.textContent = msg; t.classList.add("on");
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("on"), 1600);
+};
+
+// The API only exists once this is deployed to Pages. Running the built site from a plain file
+// server (or before the D1 binding is wired) still has to work, so fall back to localStorage.
+const local = {
+  read: () => JSON.parse(localStorage.getItem("aica.status") || "{}"),
+  write: (s) => localStorage.setItem("aica.status", JSON.stringify(s)),
+};
+
+async function loadStatus() {
+  try {
+    const r = await fetch("/api/status");
+    if (r.ok) return await r.json();
+  } catch (e) { /* not deployed yet */ }
+  return local.read();
+}
+
+async function saveStatus(id, value) {
+  STATUS[id] = value;
+  local.write(STATUS);
+  try {
+    await fetch("/api/status", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ id, status: value }),
+    });
+  } catch (e) { /* offline / not deployed — localStorage already has it */ }
+}
+
+const fmtSec = (s) => s ? `${Number(s).toFixed(1)}s` : null;
+
+function facts(item) {
+  const m = item.meta || {};
+  const out = [
+    fmtSec(m.duration_sec),
+    m.cards ? `${m.cards} cards` : null,
+    m.format,
+    m.audio_mode,
+    m.sync_gap ? `sync ±${m.sync_gap}s` : null,
+    item.preview_bytes ? `${(item.preview_bytes / 1048576).toFixed(1)} MB` : null,
+  ].filter(Boolean);
+  return out.map((f) => `<span class="fact">${f}</span>`).join("");
+}
+
+function cardHTML(item) {
+  const st = STATUS[item.id] || "pending";
+  return `
+  <div class="card ${st}" data-id="${item.id}">
+    <video src="${item.preview}" controls preload="metadata" playsinline></video>
+    <div class="body">
+      <div class="row">
+        <span class="part">Part ${item.part}</span>
+        <span class="badge ${st}">${st}</span>
+      </div>
+      <div class="facts">${facts(item)}</div>
+      ${item.caption ? `<details><summary>caption</summary><pre>${
+        item.caption.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]))
+      }</pre></details>` : ""}
+      <div class="btns">
+        <button class="ok" aria-pressed="${st === "approved"}">✓ Post karo</button>
+        <button class="no" aria-pressed="${st === "rejected"}">✕ Dobara</button>
+        ${item.caption ? '<button class="copy" title="caption copy">⧉</button>' : ""}
+      </div>
+    </div>
+  </div>`;
+}
+
+function render(items) {
+  const root = $("#root");
+  if (!items.length) {
+    root.innerHTML = '<div class="empty">Abhi koi video nahi.<div class="note">'
+      + '<code>python -m scripts.build_gallery</code> chalao.</div></div>';
+    $("#counts").textContent = "";
+    return;
+  }
+
+  // group niche -> series, so the page mirrors library/<niche>/<series>/part_NN
+  const tree = {};
+  for (const it of items) {
+    (tree[it.niche] ??= {});
+    (tree[it.niche][it.series] ??= []).push(it);
+  }
+
+  root.innerHTML = Object.entries(tree).map(([niche, seriesMap]) => `
+    <div class="niche">${niche}</div>
+    ${Object.entries(seriesMap).map(([series, parts]) => `
+      <div class="series">${series}<small>${parts.length} part${parts.length > 1 ? "s" : ""}</small></div>
+      <div class="grid">${parts.map(cardHTML).join("")}</div>
+    `).join("")}
+  `).join("");
+
+  const n = (s) => items.filter((i) => (STATUS[i.id] || "pending") === s).length;
+  $("#counts").textContent =
+    `${items.length} videos · ${n("approved")} approved · ${n("rejected")} redo · ${n("pending")} pending`;
+}
+
+(async function main() {
+  const res = await fetch("manifest.json").catch(() => null);
+  const items = res && res.ok ? (await res.json()).items : [];
+  STATUS = await loadStatus();
+  render(items);
+
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    const card = btn.closest(".card");
+    const id = card.dataset.id;
+    const item = items.find((i) => i.id === id);
+
+    if (btn.classList.contains("copy")) {
+      await navigator.clipboard.writeText(item.caption);
+      toast("caption copied");
+      return;
+    }
+    const want = btn.classList.contains("ok") ? "approved" : "rejected";
+    const next = STATUS[id] === want ? "pending" : want;   // tap again to undo
+    await saveStatus(id, next);
+    render(items);
+    toast(next === "pending" ? "cleared" : next);
+  });
+})();
+</script>
+</body>
+</html>
