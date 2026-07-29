@@ -1,5 +1,19 @@
 import os
 from orchestrator.state import ContentState
+from modules.formats import get_format
+
+
+def text_mode_for(format_profile: str) -> str:
+    """Whether dialogue is burned on screen, and how.
+
+    Measured from the reference reels: the two biggest performers (98K and 32K likes) are
+    narrated and burn NO dialogue at all — the voice carries it and a caption over it reads as
+    amateur. Music-mode reels have no voice, so the text is the only channel and must stay.
+    """
+    try:
+        return "none" if get_format(format_profile).audio_mode == "narrated" else "banner"
+    except (ValueError, AttributeError):
+        return "banner"      # unknown format: a caption we didn't need beats a silent video
 
 _HEAD = """<!doctype html>
 <html lang="en">
@@ -29,6 +43,15 @@ _HEAD = """<!doctype html>
       .scrim {{ position: absolute; top: 0; left: 0; right: 0; height: 34%;
                 background: linear-gradient(180deg, rgba(0,0,0,.75) 0%, rgba(0,0,0,0) 100%);
                 z-index: 40; }}
+      /* comic speech bubble, pointing at whoever is talking — what story_hub_life uses */
+      .bubble {{ position: absolute; top: 9%; left: 8%; right: 8%; background: #fff;
+                 color: #14161a; font-size: 46px; font-weight: 700; line-height: 1.3;
+                 text-align: center; padding: 26px 30px; border-radius: 34px;
+                 box-shadow: 0 10px 40px rgba(0,0,0,.55); z-index: 50; }}
+      .bubble::after {{ content: ""; position: absolute; bottom: -26px; left: 16%;
+                        border: 16px solid transparent; border-top: 28px solid #fff;
+                        border-right-width: 26px; }}
+      .bubble .hl {{ color: #c02020; -webkit-text-stroke: 0; }}
       /* one coloured word per card — where the eye should land in the ~2.5s it is up */
       .hl {{ color: #ff3b30; -webkit-text-stroke: 4px #000; }}
       .speaker {{ display: block; font-size: 30px; font-weight: 700; color: #ffd54a;
@@ -66,8 +89,10 @@ _TAIL = """    </div>
 def composition_writer_node(state: ContentState, project_dir: str,
                             width: int = 1080, height: int = 1920,
                             disclosure_duration_sec: float = 3.0,
-                            bgm_volume: float = 0.25) -> ContentState:
+                            bgm_volume: float = 0.25,
+                            text_mode: str | None = None) -> ContentState:
     try:
+        mode = text_mode or text_mode_for(state.get("format_profile", ""))
         segments = state["script"]["segments"]
         visuals = {v["scene_number"]: v for v in state.get("visual_assets", [])}
         audio_assets = {a["scene_number"]: a for a in state.get("audio_assets", [])}
@@ -108,14 +133,21 @@ def composition_writer_node(state: ContentState, project_dir: str,
             speaker_html = (
                 f'<span class="speaker">{speaker_name}</span>' if speaker_name else ""
             )
+            if mode == "none":
+                caption_html = ""
+            elif mode == "bubble":
+                caption_html = f'        <p class="bubble">{text}</p>\n'
+            else:
+                caption_html = (f'        <div class="scrim"></div>\n'
+                                f'        <p class="dialogue">{speaker_html}{text}</p>\n')
             clips.append(
                 f'      <section id="{scene_id}" class="clip" data-start="{cursor}" data-duration="{dur}" '
                 f'data-track-index="1">\n'
                 f'        <img src="{image}" crossorigin="anonymous" />\n'
-                f'        <div class="scrim"></div>\n'
-                f'        <p class="dialogue">{speaker_html}{text}</p>\n'
+                f'{caption_html}'
                 f'      </section>'
             )
+            sel = ".bubble" if mode == "bubble" else ".dialogue"
             # motion: slow push-in on the image + dialogue fading up.
             # Also required for correctness — an empty timeline never advances under seek and
             # `hyperframes check` fails the whole run with `sweep_static`.
@@ -124,7 +156,7 @@ def composition_writer_node(state: ContentState, project_dir: str,
                 f'{{ scale: 1.08, duration: {dur}, ease: "none" }}, {cursor});\n'
             )
             tweens.append(
-                f'      tl.fromTo("#{scene_id} .dialogue", {{ opacity: 0, y: 30 }}, '
+                f'      tl.fromTo("#{scene_id} {sel}", {{ opacity: 0, y: 30 }}, '
                 f'{{ opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }}, {cursor});\n'
             )
             # crossfade in/out so scenes flow instead of hard-cutting
@@ -134,13 +166,13 @@ def composition_writer_node(state: ContentState, project_dir: str,
                     f'{{ opacity: 1, duration: 0.35, ease: "power1.inOut" }}, {cursor});\n'
                 )
             tweens.append(
-                f'      tl.to("#{scene_id} .dialogue", '
+                f'      tl.to("#{scene_id} {sel}", '
                 f'{{ opacity: 0, duration: 0.25 }}, {round(cursor + dur - 0.25, 2)});\n'
             )
             # hard kill on the clip boundary — a seek that lands past the fade would otherwise
             # leave the previous scene's text visible (`gsap_exit_missing_hard_kill`)
             tweens.append(
-                f'      tl.set("#{scene_id} .dialogue", '
+                f'      tl.set("#{scene_id} {sel}", '
                 f'{{ opacity: 0 }}, {round(cursor + dur, 2)});\n'
             )
 
