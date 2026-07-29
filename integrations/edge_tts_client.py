@@ -18,18 +18,32 @@ voice assignment keeps working across a series.
 import os
 import asyncio
 
-# Kokoro voice id -> Edge Hindi voice, preserving gender so character casting still works
-VOICE_MAP = {
-    "am_adam": "hi-IN-MadhurNeural",
-    "am_michael": "hi-IN-MadhurNeural",
-    "bm_george": "hi-IN-MadhurNeural",
-    "af_heart": "hi-IN-SwaraNeural",
-    "af_nova": "hi-IN-SwaraNeural",
-    "af_sky": "hi-IN-SwaraNeural",
-    "bf_emma": "hi-IN-SwaraNeural",
-    "bf_isabella": "hi-IN-SwaraNeural",
+_MALE = "hi-IN-MadhurNeural"
+_FEMALE = "hi-IN-SwaraNeural"
+
+# Edge has exactly two Hindi voices, but a script can have five characters. Pitch and rate do the
+# separating: lower + slower reads as older, higher + faster as younger. Each id gets its own
+# delivery so no two characters in one scene sound like the same person.
+#                  (base voice, rate,   pitch)
+VOICE_PROFILES: dict[str, tuple[str, str, str]] = {
+    "am_adam":      (_MALE,   "+8%",  "+0Hz"),     # lead male, neutral
+    "am_michael":   (_MALE,   "+0%",  "-8Hz"),     # older, heavier
+    "bm_george":    (_MALE,   "+16%", "+6Hz"),     # younger, quicker
+    "af_heart":     (_FEMALE, "+8%",  "+0Hz"),     # lead female, neutral
+    "af_nova":      (_FEMALE, "+18%", "+8Hz"),     # young girl
+    "af_sky":       (_FEMALE, "+0%",  "-6Hz"),     # older woman
+    "bf_emma":      (_FEMALE, "+12%", "+4Hz"),
+    "bf_isabella":  (_FEMALE, "-4%",  "-10Hz"),    # slowest, deepest
 }
-_DEFAULT_VOICE = "hi-IN-SwaraNeural"
+_DEFAULT_PROFILE = (_FEMALE, "+8%", "+0Hz")
+
+# kept for callers that only need the base voice
+VOICE_MAP = {k: v[0] for k, v in VOICE_PROFILES.items()}
+
+
+def profile_for(voice_id: str | None) -> tuple[str, str, str]:
+    """(edge voice, rate, pitch) for a character's assigned voice id."""
+    return VOICE_PROFILES.get(voice_id or "", _DEFAULT_PROFILE)
 
 
 class EdgeTTS:
@@ -41,11 +55,11 @@ class EdgeTTS:
     def is_configured(self) -> bool:
         return True            # no key, no quota
 
-    def _speak(self, text: str, voice: str, dest: str) -> None:
+    def _speak(self, text: str, voice: str, dest: str, rate: str, pitch: str) -> None:
         import edge_tts
 
         async def run():
-            comm = edge_tts.Communicate(text, voice, rate=self._rate, pitch=self._pitch)
+            comm = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch)
             with open(dest, "wb") as f:
                 async for chunk in comm.stream():
                     if chunk["type"] == "audio":
@@ -54,9 +68,9 @@ class EdgeTTS:
         asyncio.run(run())
 
     def synthesize(self, text: str, output_path: str, voice: str | None = None) -> str:
-        edge_voice = VOICE_MAP.get(voice or self._voice, _DEFAULT_VOICE)
+        edge_voice, rate, pitch = profile_for(voice or self._voice)
         os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
-        self._speak(text, edge_voice, output_path)
+        self._speak(text, edge_voice, output_path, rate, pitch)
         if not os.path.exists(output_path) or os.path.getsize(output_path) < 1024:
             raise RuntimeError(f"edge tts produced no audio for: {text[:50]!r}")
         return output_path
