@@ -4,6 +4,7 @@ import urllib.request
 from orchestrator.state import ContentState
 from integrations.fal_client import FalClient
 from modules.style import style_for_niche
+from modules.prompt_terms import disambiguate
 
 
 def _http_fetch(url: str, dest: str, timeout: int = 180) -> None:
@@ -25,7 +26,7 @@ def _build_prompt(seg: dict, style_prompt: str, appearances: dict) -> str:
     parts = []
     if style_prompt:
         parts.append(style_prompt.rstrip(". "))
-    parts.append(seg.get("visual_direction", ""))
+    parts.append(disambiguate(seg.get("visual_direction", "")))
     if seg.get("character_visible"):
         look = appearances.get(seg.get("speaker"))
         if look:
