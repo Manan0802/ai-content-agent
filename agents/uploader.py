@@ -13,7 +13,8 @@ def _build_metadata(state: ContentState):
     title = title[:100]
 
     # engagement CTAs + #Shorts, per the measured caption research (modules/caption.py)
-    caption = build_caption(script, part_number=part, total_parts=total)
+    caption = build_caption(script, part_number=part, total_parts=total,
+                                platform="youtube")
     description = f"{caption}\n\n{SETTINGS.ai_disclosure_text}"
     tags = [t.lstrip("#") for t in (script.get("hashtags", []) or [])]
     return title, description, tags

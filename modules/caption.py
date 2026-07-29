@@ -14,6 +14,10 @@ to YouTube, where the money actually is (Shorts RPM is ~10% of long-form).
 from dataclasses import dataclass
 
 IG_CAPTION_LIMIT = 2200
+# Instagram caps hashtags at 5 (was 30). Mosseri: "hashtags are not a way to get more reach" —
+# they categorise the post so it reaches the right viewers. Extras are wasted, so keep the most
+# specific ones and drop the rest.
+IG_MAX_HASHTAGS = 5
 
 
 @dataclass(frozen=True)
@@ -24,21 +28,31 @@ class CaptionConfig:
     comment_keyword: str = "🔥"
 
 
-def _tags(script: dict) -> str:
+def _tags(script: dict, platform: str = "instagram") -> str:
+    # `#Shorts` tells YouTube to treat the upload as a Short. It does nothing on Instagram, where
+    # hashtags are capped at 5 — so it would only burn one of five slots.
+    raw = list(script.get("hashtags", []) or [])
+    limit = IG_MAX_HASHTAGS if platform == "instagram" else None
+    if platform == "youtube":
+        raw = raw + ["#Shorts"]
+
     seen, out = set(), []
-    for t in list(script.get("hashtags", []) or []) + ["#Shorts"]:
+    for t in raw:
         tag = t if t.startswith("#") else f"#{t}"
-        if tag.lower() not in seen:
-            seen.add(tag.lower())
-            out.append(tag)
+        if tag.lower() in seen:
+            continue
+        seen.add(tag.lower())
+        out.append(tag)
+        if limit and len(out) == limit:
+            break
     return " ".join(out)
 
 
 def build_caption(script: dict, config: CaptionConfig | None = None,
                   part_number: int = 0, total_parts: int = 0,
-                  youtube_url: str = "") -> str:
+                  youtube_url: str = "", platform: str = "instagram") -> str:
     cfg = config or CaptionConfig()
-    tags = _tags(script)
+    tags = _tags(script, platform)
 
     body = []
     hook = (script.get("hook") or script.get("title") or "").strip()
