@@ -26,6 +26,9 @@ class CaptionConfig:
     share_cta: bool = True
     comment_cta: bool = True
     comment_keyword: str = "🔥"
+    # The hook emoji has to match the domain. 😱 sells a horror short and undercuts a drama —
+    # the first thing a reader sees shouldn't promise the wrong feeling.
+    hook_emoji: str = "😱"
 
 
 def _tags(script: dict, platform: str = "instagram") -> str:
@@ -57,7 +60,7 @@ def build_caption(script: dict, config: CaptionConfig | None = None,
     body = []
     hook = (script.get("hook") or script.get("title") or "").strip()
     if hook:
-        body.append(f"😱 {hook}")
+        body.append(f"{cfg.hook_emoji} {hook}")
 
     ctas = []
     # Point at the part that is ALREADY posted (the previous one). On Part 1 there is nothing
@@ -67,7 +70,10 @@ def build_caption(script: dict, config: CaptionConfig | None = None,
     if total_parts and part_number < total_parts:
         ctas.append("👉 अगला पार्ट कल रात")
     if cfg.follow_cta:
-        ctas.append("❤️ Follow करो ताकि अगला पार्ट मिस ना हो")
+        # A standalone has no next part, so promising one reads as a mistake to anyone who
+        # checks the profile — and there is nothing there to keep them.
+        ctas.append("❤️ Follow करो ताकि अगला पार्ट मिस ना हो" if total_parts
+                    else "❤️ Follow करो — रोज़ नई कहानी")
     if cfg.share_cta:
         ctas.append("📲 3 दोस्तों को share करो")
     if cfg.comment_cta:
