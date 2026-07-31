@@ -83,9 +83,21 @@ def test_the_end_card_is_a_full_frame_transparent_overlay(tmp_path):
     assert img.getpixel((5, 5))[3] == 0               # corners stay transparent
 
 
-def test_the_clips_own_audio_is_never_re_encoded(monkeypatch):
-    """Flow bakes lip sync into the pixels; re-encoding the audio risks drifting off it."""
+def test_the_audio_is_never_shifted_against_the_picture(monkeypatch):
+    """Flow bakes lip sync into the pixels, so nothing here may move the audio's start.
+
+    This used to insist on `-c:a copy`, which was a proxy for the same thing. The end card
+    outlasts the audio, and without a fade the room tone stopped dead the instant it appeared —
+    fixing that needs a filter, and a filter needs a re-encode. Measured before allowing it:
+    cross-correlating the first four seconds before and after `add_furniture` gives a **0 sample**
+    offset, because ffmpeg carries AAC encoder delay in the MP4 edit list.
+
+    So the rule is the real one — fade and pad at the END are fine, anything that re-times the
+    start is not.
+    """
     monkeypatch.setattr("modules.assemble.probe_duration", lambda p: 10.0)
     calls, run = _capture()
     add_furniture("in.mp4", "out.mp4", part=1, outro_top="A", outro_bottom="B", run=run)
-    assert "copy" in calls[0]
+    chain = calls[0][calls[0].index("-filter_complex") + 1]
+    for shifter in ("adelay", "atrim", "asetpts", "atempo"):
+        assert shifter not in chain, f"{shifter} would move the audio off the lip sync"
