@@ -52,14 +52,35 @@ def test_the_end_card_holds_the_last_frame_rather_than_cutting_to_black(monkeypa
     assert "gte(t,30.0)" in vf                     # text only after the story ends
 
 
-def test_the_part_badge_and_ai_label_are_burned_in(monkeypatch):
+def test_the_badges_are_rendered_as_images_not_drawtext(monkeypatch, tmp_path):
+    """This machine's ffmpeg is built without libfreetype, so `drawtext` does not exist —
+    caught by running the assembler on a real Flow clip, not by the unit tests."""
     monkeypatch.setattr("modules.assemble.probe_duration", lambda p: 10.0)
     calls, run = _capture()
-    add_furniture("in.mp4", "out.mp4", part=3, outro_top="A", outro_bottom="B", run=run)
+    add_furniture("in.mp4", str(tmp_path / "out.mp4"), part=3, outro_top="A", outro_bottom="B",
+                  run=run, work_dir=str(tmp_path))
 
-    vf = " ".join(calls[0])
-    assert "PART 3" in vf
-    assert "AI-Generated" in vf
+    args = calls[0]
+    assert "drawtext" not in " ".join(args)
+    assert args.count("-i") == 4                 # video + badge + label + end card
+    assert " ".join(args).count("overlay") == 3
+
+
+def test_the_badge_image_actually_contains_the_part_number(tmp_path):
+    from modules.assemble import render_badge
+    p = render_badge("PART 3", str(tmp_path / "b.png"), (200, 20, 20, 220))
+    from PIL import Image
+    img = Image.open(p)
+    assert img.mode == "RGBA" and img.width > 60      # real label, not an empty tile
+
+
+def test_the_end_card_is_a_full_frame_transparent_overlay(tmp_path):
+    from modules.assemble import render_end_card
+    from PIL import Image
+    p = render_end_card("काळू ने क्या छुपाया था?", "PART 2", str(tmp_path / "c.png"))
+    img = Image.open(p)
+    assert img.size == (1080, 1920)
+    assert img.getpixel((5, 5))[3] == 0               # corners stay transparent
 
 
 def test_the_clips_own_audio_is_never_re_encoded(monkeypatch):
