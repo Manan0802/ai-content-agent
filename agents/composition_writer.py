@@ -1,6 +1,7 @@
 import os
 from orchestrator.state import ContentState
 from modules.formats import get_format
+from modules.camera import move_for
 
 
 def text_mode_for(format_profile: str) -> str:
@@ -151,9 +152,13 @@ def composition_writer_node(state: ContentState, project_dir: str,
             # motion: slow push-in on the image + dialogue fading up.
             # Also required for correctness — an empty timeline never advances under seek and
             # `hyperframes check` fails the whole run with `sweep_static`.
+            # a different move per scene — twelve identical zooms read as a slideshow
+            frm, to = move_for(seg["scene_number"])
             tweens.append(
-                f'      tl.fromTo("#{scene_id} img", {{ scale: 1.0 }}, '
-                f'{{ scale: 1.08, duration: {dur}, ease: "none" }}, {cursor});\n'
+                f'      tl.fromTo("#{scene_id} img", '
+                f'{{ scale: {frm["scale"]}, x: {frm.get("x", 0)}, y: {frm.get("y", 0)} }}, '
+                f'{{ scale: {to["scale"]}, x: {to.get("x", 0)}, y: {to.get("y", 0)}, '
+                f'duration: {dur}, ease: "none" }}, {cursor});\n'
             )
             tweens.append(
                 f'      tl.fromTo("#{scene_id} {sel}", {{ opacity: 0, y: 30 }}, '
