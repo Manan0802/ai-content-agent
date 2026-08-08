@@ -108,3 +108,20 @@ def test_shorts_is_a_youtube_tag_and_does_not_go_on_instagram():
 def test_youtube_is_not_held_to_instagrams_five_tag_cap():
     script = {"title": "T", "hashtags": [f"#t{i}" for i in range(8)]}
     assert build_caption(script, platform="youtube").count("#") > 5
+
+
+def test_the_last_part_does_not_promise_a_next_one():
+    """A finale that says "so you don't miss the next part" sends people to a dead profile.
+
+    Shipped that way on आखरी कॉल Part 3, together with a "comment PART4" ask for a Part 4 that
+    was never coming.
+    """
+    from modules.caption import build_caption
+
+    script = {"hook": "अंत", "hashtags": ["#a"]}
+    finale = build_caption(script, part_number=3, total_parts=3)
+    middle = build_caption(script, part_number=2, total_parts=3)
+
+    assert "अगला पार्ट" not in finale, "the last part promised a next part"
+    assert "रोज़ नई कहानी" in finale
+    assert "अगला पार्ट कल रात" in middle, "a middle part should still promise the next one"

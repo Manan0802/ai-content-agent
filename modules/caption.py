@@ -70,9 +70,11 @@ def build_caption(script: dict, config: CaptionConfig | None = None,
     if total_parts and part_number < total_parts:
         ctas.append("👉 अगला पार्ट कल रात")
     if cfg.follow_cta:
-        # A standalone has no next part, so promising one reads as a mistake to anyone who
-        # checks the profile — and there is nothing there to keep them.
-        ctas.append("❤️ Follow करो ताकि अगला पार्ट मिस ना हो" if total_parts
+        # Promise the next part only when there is one. A standalone never has one, and neither
+        # does the last part of a serial — the finale shipped saying "so you don't miss the next
+        # part" under a story that had just ended.
+        more_coming = bool(total_parts) and part_number < total_parts
+        ctas.append("❤️ Follow करो ताकि अगला पार्ट मिस ना हो" if more_coming
                     else "❤️ Follow करो — रोज़ नई कहानी")
     if cfg.share_cta:
         ctas.append("📲 3 दोस्तों को share करो")
