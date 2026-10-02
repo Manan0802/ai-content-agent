@@ -1,4 +1,13 @@
 #!/bin/bash
+# ⚠️ SUPERSEDED 2026-09-05 — DO NOT USE. Kept only as a record of the pre-rebuild Flow.
+#
+# Google Flow was rebuilt in Sept 2026 and this script stopped working WITHOUT FAILING: it still
+# runs, still exits 0, and never produces a clip. It looks for a send button labelled "Create",
+# which no longer exists, so the prompt is typed and simply never sent.
+#
+# Use tools/flow_clip_v2.sh. See the Sept 2026 section of aica-gotchas for everything that
+# changed — the short version is that the new app is Angular, not React, so `element.click()`
+# works and every CDP-input trick this file relies on does not.
 # Generate ONE Flow clip end-to-end and save it to disk.
 #
 #   flow_clip.sh <authuser> <prompt> <output.mp4>
