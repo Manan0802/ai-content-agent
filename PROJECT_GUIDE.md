@@ -1653,7 +1653,7 @@ tests are necessary, but not enough.
 ### 💾 Git and backups
 
 On 2026-10-02 the batch-2 tool chain and this guide were committed and pushed to GitHub as
-Manan0802, on the branch **`docs/project-guide-batch2`**. That commit includes:
+Manan0802, then merged into **`main`**. That work includes:
 
 - `content/batch2/`
 - `tools/flow_clip_v2.sh`, `batch_generate.sh`, `batch_all.sh`, `run_batch2.sh`,
@@ -1661,8 +1661,6 @@ Manan0802, on the branch **`docs/project-guide-batch2`**. That commit includes:
 - `tests/test_line_verification.py`
 - the warning header in `tools/flow_clip.sh`
 - this guide
-
-**Until that branch is merged, `main` still ends at `61e00e8` (2026-08-08).**
 
 Left out of git on purpose:
 
